@@ -18,7 +18,7 @@ let PUBLISH_TOPICS = []
 fs.readdir(DEVICE_PATH, async (err, files) => {
   for (let file of files) {
     const module = await import(DEVICE_PATH + file)
-    
+
     DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
   }
 
@@ -100,6 +100,8 @@ async function processConfig (client, data) {
 
         DEVICE_INSTANCES[device.id] = device
       }
+    } else {
+      log('⚠️', 'Unknown device class: ' + config.class)
     }
   }
 }
