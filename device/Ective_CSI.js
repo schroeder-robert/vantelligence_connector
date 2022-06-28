@@ -1,4 +1,4 @@
-import { Gpio } from 'pigpio'
+import { pigpio } from 'pigpio-client'
 import Device from './base.js'
 
 const MODE_OPTIONS = [
@@ -23,85 +23,99 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const client = pigpio({ host: 'localhost' })
+    const ready = new Promise((resolve, reject) => {
+      client.once('connected', resolve)
+      client.once('error', reject)
+    })
 
-    if (config.type === 'pins') {
-      const emitPower = state => {
-        this.emitEntity({
-          type: 'switch',
-          name: 'Power',
-          key: 'power',
-          commands: ['command'],
-          states: {
-            state: state === 1 ? 'ON' : 'OFF'
+    ready.then(async (info) => {
+      const config = this.config.connection
+
+      if (config.type === 'pins') {
+        const emitPower = state => {
+          this.emitEntity({
+            type: 'switch',
+            name: 'Power',
+            key: 'power',
+            commands: ['command'],
+            states: {
+              state: state === 1 ? 'ON' : 'OFF'
+            }
+          })
+
+          if (!state) {
+            this.processMessage([false, false, false, false, false, false, false, false])
           }
-        })
-
-        if (!state) {
-          this.processMessage([false, false, false, false, false, false, false, false])
-        }
-      }
-
-      POWER_PIN = new Gpio(config.power_pin, { mode: Gpio.OUTPUT, alert: true })
-      POWER_PIN.on('alert', emitPower)
-      POWER_PIN.digitalWrite(0)
-
-      emitPower(0)
-
-      const emitMode = state => {
-        this.emitEntity({
-          type: 'select',
-          name: 'Modus',
-          key: 'mode',
-          options: MODE_OPTIONS,
-          commands: ['command'],
-          states: {
-            state: MODE_OPTIONS[state]
-          }
-        })
-      }
-
-      MODE_PIN = new Gpio(config.mode_pin, { mode: Gpio.OUTPUT, alert: true })
-      MODE_PIN.on('alert', emitMode)
-      MODE_PIN.digitalWrite(0)
-
-      emitMode(0)
-
-      let last = 0
-      let data = []
-
-      DATA_PIN = new Gpio(config.data_pin, { 
-        mode: Gpio.INPUT,
-        edge: Gpio.RISING_EDGE,
-        pullUpDown: Gpio.PUD_UP
-      })
-      DATA_PIN.glitchFilter(10000)
-      DATA_PIN.on('interrupt', (state, tick) => {
-        const value = tick - last
-
-        if (value > 90000) {
-          if (data.length) {
-            this.processMessage(data)
-          }
-
-          data = []
-        } else {
-          data.push(value < 70000)
         }
 
-        last = tick
-      })
-    } else {
-      return 'Unknown connection type!'
-    }
+        POWER_PIN = client.gpio(config.power_pin)
+        POWER_PIN.modeSet('output')
+        POWER_PIN.notify(emitPower)
+        POWER_PIN.write(0)
+
+        emitPower(0)
+
+        const emitMode = state => {
+          this.emitEntity({
+            type: 'select',
+            name: 'Modus',
+            key: 'mode',
+            options: MODE_OPTIONS,
+            commands: ['command'],
+            states: {
+              state: MODE_OPTIONS[state]
+            }
+          })
+        }
+
+        MODE_PIN = client.gpio(config.mode_pin)
+        MODE_PIN.modeSet('output')
+        MODE_PIN.notify(emitMode)
+        MODE_PIN.write(0)
+
+        emitMode(0)
+
+        let last = 0
+        let data = []
+
+        DATA_PIN = client.gpio(config.data_pin)
+        DATA_PIN.modeSet('input')
+        
+          //edge: Gpio.RISING_EDGE
+
+        DATA_PIN.pullUpDown(2)
+        DATA_PIN.glitchSet(10000)
+        DATA_PIN.notify((state, tick) => {
+          if (state) {
+            const value = tick - last
+            // console.log(value, state)
+            if (value > 90000) {
+              if (data.length) {
+                this.processMessage(data)
+                // console.log(data)
+              }
+
+              data = []
+            } else {
+              data.push(value < 70000)
+            }
+
+            last = tick
+          }
+        })
+      } else {
+        return 'Unknown connection type!'
+      }
+    })
   }
 
   setPower (state) {
-    POWER_PIN.digitalWrite(state === 'ON' ? 1 : 0)
+    POWER_PIN.write(state === 'ON' ? 1 : 0)
   }
 
   setMode (state) {
-    MODE_PIN.digitalWrite(state)
+    MODE_PIN.write(state)
   }
 
   processMessage (data) {
