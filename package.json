@@ -13,7 +13,7 @@
     "i2c-bus": "^5.2.2",
     "mqtt": "^4.3.5",
     "nodemon": "^2.0.15",
-    "pigpio": "^3.3.1",
+    "pigpio-client": "^1.5.2",
     "serialport": "^9.2.8",
     "socketcan": "^3.0.0"
   }
