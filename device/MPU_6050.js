@@ -1,4 +1,5 @@
-import bus from 'i2c-bus'
+import i2c from 'i2c-bus'
+import MPU6050 from 'i2c-mpu6050'
 import Device from './base.js'
 
 const ADDRESS = 0x68
@@ -10,53 +11,31 @@ export default class extends Device {
     this.manufacturer = 'TDK InvenSense'
     this.model = 'MPU-6050'
     this.version = '1'
-    this.bus = null
+    this.sensor = null
   }
 
   async connect () {
     const config = this.config.connection
-
-    this.bus = bus.openSync(parseInt(config.bus))
-    this.bus.writeByteSync(ADDRESS, 0x6B, 0x01)
-
-    this.poll('requestValues', 1000, result => this.processMessage(result))
-  }
-
-  disconnect () {
-    this.bus.closeSync()
-  }
-
-  decodeBytes (buffer) {
-    const values = []
-
-    for (let i = 0; i < buffer.length; i += 2) {
-      const value = (buffer[i] << 8) | buffer[i + 1]
-
-      values.push(value < 0x8000 ? value : value - 0x10000)
-    }
-
-    return values
+    const bus = i2c.openSync(parseInt(config.bus));
+    
+    this.sensor = new MPU6050(bus, ADDRESS)
+    this.poll('requestValues', 10000, result => this.processMessage(result))
   }
 
   requestValues () {
-    const buffer = Buffer.alloc(14)
-      
-    this.bus.readI2cBlockSync(ADDRESS, 0x3B, buffer.length, buffer)
-
-    return buffer
+    return this.sensor.readSync()
   }
 
-  processMessage (buffer) {
-    const values = this.decodeBytes(buffer)
-    const temperature = Math.round((values[3] + 12412) / 34) / 10
-    const forceX = Math.round(values[0] / 1638.4) / 10
-    const forceY = Math.round(values[1] / 1638.4) / 10
-    const forceZ = Math.round(values[2] / 1638.4) / 10
-    const rotationX = Math.round(values[4] / 13.1) / 10
-    const rotationY = Math.round(values[5] / 13.1) / 10
-    const rotationZ = Math.round(values[6] / 13.1) / 10
-    const tiltX = Math.round(Math.atan(forceX / Math.sqrt(forceY * forceY + forceZ * forceZ)) * 10) / 10
-    const tiltY = Math.round(Math.atan(forceY / Math.sqrt(forceX * forceX + forceZ * forceZ)) * 10) / 10
+  processMessage (values) {
+    const temperature = Math.round(values.temp * 10) / 10
+    const forceX = Math.round(values.accel.x * 100) / 100
+    const forceY = Math.round(values.accel.y * 100) / 100
+    const forceZ = Math.round(values.accel.z * 100) / 100
+    const rotationX = Math.round(values.gyro.x * 100) / 100
+    const rotationY = Math.round(values.gyro.y * 100) / 100
+    const rotationZ = Math.round(values.gyro.z * 100) / 100
+    const tiltX = Math.round(values.rotation.x * 1000) / 1000
+    const tiltY = Math.round(values.rotation.y * 1000) / 1000
 
     this.emitEntity({
       name: 'Neigung X',

@@ -11,9 +11,11 @@
     "bme280-sensor": "^0.1.7",
     "chalk": "^5.0.0",
     "i2c-bus": "^5.2.2",
+    "i2c-mpu6050": "^2.3.0",
     "mqtt": "^4.3.5",
     "nodemon": "^2.0.15",
     "pigpio-client": "^1.5.2",
+    "pulseaudio.js": "^1.3.1",
     "serialport": "^9.2.8",
     "socketcan": "^3.0.0"
   }

@@ -18,7 +18,9 @@ let PUBLISH_TOPICS = []
 fs.readdir(DEVICE_PATH, async (err, files) => {
   for (let file of files) {
     const module = await import(DEVICE_PATH + file)
-
+// if (file === 'MPU_6050.js') continue
+// if (file === 'Pigpio.js') continue
+// if (!['MPU_6050.js'].includes(file)) continue
     DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
   }
 
