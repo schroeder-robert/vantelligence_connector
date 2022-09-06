@@ -38,13 +38,26 @@ export default class {
     }
   }
 
-  async poll (method, time, callback) {
+  async poll (method, interval, callback) {
+    let args = []
+
     callback = typeof callback === 'function' ? callback : () => {}
-    
-    if (typeof this[method] === 'function') {
-      setInterval(async () => callback(await this[method]()), time)
+
+    if (method instanceof Array) {
+      args = method.slice(1)
+      method = method[0]
+    }
+
+    if (typeof method === 'function') {
+      setInterval(async () => callback(await method(...args)), interval)
       
-      callback(await this[method]())
+      callback(await method(...args))
+    }
+    
+    if (typeof method === 'string' && typeof this[method] === 'function') {
+      setInterval(async () => callback(await this[method](...args)), interval)
+      
+      callback(await this[method](...args))
     }
   }
 
