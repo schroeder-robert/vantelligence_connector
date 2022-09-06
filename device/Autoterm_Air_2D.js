@@ -105,7 +105,7 @@ export default class extends Device {
   async connect () {
     const { connection } = this.config
 
-    if (config.type !== 'serial') {
+    if (connection.type !== 'serial') {
       return 'Connection type not supported!'
     }
 
