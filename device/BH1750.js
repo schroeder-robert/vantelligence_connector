@@ -14,9 +14,9 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection } = this.config
 
-    this.bus = bus.openSync(parseInt(config.bus))
+    this.bus = bus.openSync(parseInt(connection.bus))
 
     this.poll('requestValues', 1000, result => this.processMessage(result))
   }

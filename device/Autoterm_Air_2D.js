@@ -103,13 +103,13 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection } = this.config
 
     if (config.type !== 'serial') {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort(config.port, {
+    this.port = new SerialPort(connection.port, {
       baudRate: 9600,
       autoOpen: false
     })

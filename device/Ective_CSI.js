@@ -30,9 +30,9 @@ export default class extends Device {
     })
 
     ready.then(async (info) => {
-      const config = this.config.connection
+      const { connection } = this.config
 
-      if (config.type === 'pins') {
+      if (connection.type === 'pins') {
         const emitPower = state => {
           this.emitEntity({
             type: 'switch',
@@ -49,7 +49,7 @@ export default class extends Device {
           }
         }
 
-        POWER_PIN = client.gpio(config.power_pin)
+        POWER_PIN = client.gpio(connection.power_pin)
         POWER_PIN.modeSet('output')
         POWER_PIN.notify(emitPower)
         POWER_PIN.write(0)
@@ -69,7 +69,7 @@ export default class extends Device {
           })
         }
 
-        MODE_PIN = client.gpio(config.mode_pin)
+        MODE_PIN = client.gpio(connection.mode_pin)
         MODE_PIN.modeSet('output')
         MODE_PIN.notify(emitMode)
         MODE_PIN.write(0)
@@ -79,7 +79,7 @@ export default class extends Device {
         let last = 0
         let data = []
 
-        DATA_PIN = client.gpio(config.data_pin)
+        DATA_PIN = client.gpio(connection.data_pin)
         DATA_PIN.modeSet('input')
         
           //edge: Gpio.RISING_EDGE

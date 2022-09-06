@@ -15,8 +15,8 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
-    const bus = i2c.openSync(parseInt(config.bus));
+    const { connection } = this.config
+    const bus = i2c.openSync(parseInt(connection.bus));
     
     this.sensor = new MPU6050(bus, ADDRESS)
     this.poll('requestValues', 10000, result => this.processMessage(result))

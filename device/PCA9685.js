@@ -15,11 +15,11 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection, channels } = this.config
 
     try {
       let options = {
-        i2c: bus.openSync(config.bus),
+        i2c: bus.openSync(connection.bus),
         address: ADDRESS,
         frequency: 50,
         debug: false
@@ -27,8 +27,8 @@ export default class extends Device {
 
       this.controller = new PCA9685.Pca9685Driver(options, error => {
         if (!error) {
-          if (this.config.channels) {
-            this.config.channels.forEach(channel => {
+          if (channels) {
+            channels.forEach(channel => {
               this.emitEntity({
                 type: 'light',
                 name: channel.name,

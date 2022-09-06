@@ -14,13 +14,13 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection } = this.config
     const log = console.log
 
     console.log = () => {}
 
     this.sensor = new BME280({
-      i2cBusNo: parseInt(config.bus),
+      i2cBusNo: parseInt(connection.bus),
       i2cAddress: ADDRESS
     })
 
