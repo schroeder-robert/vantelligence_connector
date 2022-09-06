@@ -8,7 +8,7 @@ export default class extends Device {
   constructor (config) {
     super(config)
     
-    this.manufacturer = '...'
+    this.manufacturer = 'NXP'
     this.model = 'PCA9685'
     this.version = '1'
     this.controller = null
@@ -28,38 +28,8 @@ export default class extends Device {
       this.controller = new PCA9685.Pca9685Driver(options, error => {
         if (!error) {
           if (channels) {
-            channels.forEach(channel => {
-              this.emitEntity({
-                type: 'light',
-                name: channel.name,
-                key: 'channel' + channel.id,
-                brightness: true,
-                brightnessScale: channel.max - channel.min,
-                commands: ['command'],
-                states: {
-                  state: JSON.stringify({
-                    state: 'ON',
-                    brightness: 100
-                  })
-                }
-              })
-            })
+            channels.forEach(channel => this.emitChannel(channel, 0))
           }
-
-          // pwm.channelOff,(0)
-
-          // pwm.setDutyCycle(0, 1)
-
-          // controller.setPulseLength(0, 400) // 364
-          // controller.setPulseLength(0, 2600) // 2736
-
-          // pwm.setPulseRange(0, 10, 240, function() {
-          //   if (error) {
-          //     console.error("Error setting pulse range.")
-          //   } else {
-          //     console.log("Pulse range set.")
-          //   }
-          // })
         }
       })
     } catch (error) {
@@ -67,14 +37,26 @@ export default class extends Device {
     }
   }
 
+  emitChannel (channel, state) {
+    this.emitEntity({
+      type: 'number',
+      name: channel.name,
+      key: 'channel' + channel.id,
+      min: 0,
+      max: channel.scale || 180,
+      commands: ['command'],
+      states: { state }
+    })
+  }
+
   async handle (key, state, value) {
     const id = parseInt(key.slice(7))
     const channel = this.config.channels.find(channel => channel.id === id)
 
     if (channel) {
-      value = JSON.parse(value)
+      this.controller.setPulseLength(id, Math.round(value / (channel.scale || 180) * (channel.max - channel.min) + channel.min))
 
-      this.controller.setPulseLength(id, value.brightness + channel.min)
+      this.emitChannel(channel, value)
     }
   }
 }

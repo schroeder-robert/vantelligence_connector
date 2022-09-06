@@ -16,19 +16,22 @@
           "id": 0,
           "name": "Test-0",
           "min": 400,
-          "max": 2600
+          "max": 2600,
+          "scale": 180
         },
         {
           "id": 1,
           "name": "Test-1",
           "min": 400,
-          "max": 2600
+          "max": 2600,
+          "scale": 180
         },
         {
           "id": 2,
           "name": "Test-2",
           "min": 400,
-          "max": 2600
+          "max": 2600,
+          "scale": 180
         }
       ]
     },
