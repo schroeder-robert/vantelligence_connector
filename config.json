@@ -39,7 +39,18 @@
       "connection": {
         "type": "i2c",
         "bus": 1
-      }
+      },
+      "values": [
+        {
+          "name": "Frischwasser",
+          "measure": "0+GND",
+          "min": 0,
+          "max": 30000,
+          "interval": 2000,
+          "scale": 110,
+          "unit": "l"
+        }
+      ]
     },
     {
       "name": "Luftsensor",
@@ -113,6 +124,9 @@
       "name": "GPIO",
       "id": "gpio",
       "class": "Pigpio",
+      "connection": {
+        "host": "localhost"
+      },
       "pins": [
         {
           "name": "Dashcam",
