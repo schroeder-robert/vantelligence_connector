@@ -10,21 +10,30 @@ const DEVICE_PATH = './device/'
 const DEVICE_CLASSES = {}
 const DEVICE_INSTANCES = []
 const HA_BASE_TOPIC = 'homeassistant'
+const CONFIG_FILE = './config.json'
 
 let HA_DISCOVERY = []
 let SUBSCRIBED_TOPICS = {}
 let PUBLISH_TOPICS = []
 
-fs.readdir(DEVICE_PATH, async (err, files) => {
-  for (let file of files) {
-    const module = await import(DEVICE_PATH + file)
-// if (file === 'MPU_6050.js') continue
-// if (file === 'Pigpio.js') continue
-// if (!['MPU_6050.js'].includes(file)) continue
-    DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
-  }
+// get device class list
+fs.readdir(DEVICE_PATH, async (error, files) => {
+  if (error) {
+    log('⚠️', error)
+  } else {
+    for (let file of files) {
+      // import device class
+      const module = await import(DEVICE_PATH + file)
 
-  connect()
+      // development filter
+      if (!['PCA9685.js'].includes(file)) continue
+
+      // build devie class object
+      DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
+    }
+
+    connect()
+  }
 })
 
 function connect () {
@@ -36,16 +45,28 @@ function connect () {
     password: args.password || process.env.MQTT_PASSWORD
   }
 
+  // create client
   const client = mqtt.connect('mqtt://' + host, options)
-
+  
+  // connect to broker
   client.on('connect', () => {
+    // check if local config exists
+    if (fs.existsSync(CONFIG_FILE)) {
+      log('✨', 'Local config found. Publishing...')
+
+      client.publish(BASE_TOPIC + '/' + CONFIG_TOPIC, fs.readFileSync(CONFIG_FILE), { retain: true })
+    }
+
+    // subscribe to config topic
     client.subscribe(BASE_TOPIC + '/' + CONFIG_TOPIC)
   })
 
+  // error handling
   client.on('error', error => {
     log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(host + ':' + options.port) + '": ' + chalk.red(error.code))
   })
 
+  // react to messages of subscribed topics
   client.on('message', (topic, message) => {
     const parts = topic.split('/')
 
