@@ -32,6 +32,18 @@ export default class {
     }
   }
 
+  error (message) {
+    this.log(message, '🛑')
+  }
+
+  warning (message) {
+    this.log(message, '⚠️')
+  }
+
+  info (message) {
+    this.log(message, 'ℹ️')
+  }
+
   emitEntity (entity) {
     if (typeof this.onEntityUpdateCallback === 'function') {
       this.onEntityUpdateCallback(entity)
@@ -67,7 +79,7 @@ export default class {
     if (typeof this[method] === 'function') {
       return await this[method](value, state)
     } else {
-      this.log('Method "' + chalk.red(method) + '" not found!', '⚠️')
+      this.warning('Method "' + chalk.red(method) + '" not found!')
     }
   }
 

@@ -65,73 +65,75 @@ export default class extends Device {
   processMessage (buffer) {
     const values = this.decodeBytes(buffer)
   
-    if (values[0] === 65506) {
-      const boardBatteryVoltage = values[2] / 100
-      const panelVoltage = values[6] / 10
-      const panelPower = values[5]
-      const chargingCurrent = values[1] / 10
-      const chargedEnergy = values[13] / 1000
-      const chargingPower = Math.round(boardBatteryVoltage * chargingCurrent)
-
-      this.emitEntity({
-        name: 'Spannung Bordbatterie',
-        key: 'voltage_board_battery',
-        class: 'voltage',
-        unit: 'V',
-        states: {
-          state: boardBatteryVoltage
-        }
-      })
-
-      this.emitEntity({
-        name: 'Spannung Eingang',
-        key: 'panel_voltage',
-        class: 'voltage',
-        unit: 'V',
-        states: {
-          state: panelVoltage
-        }
-      })
-
-      this.emitEntity({
-        name: 'Leistung Eingang',
-        key: 'panel_power',
-        class: 'power',
-        unit: 'W',
-        states: {
-          state: panelPower
-        }
-      })
-
-      this.emitEntity({
-        name: 'Leistung Ausgang',
-        key: 'charging_power',
-        class: 'power',
-        unit: 'W',
-        states: {
-          state: chargingPower
-        }
-      })
-
-      this.emitEntity({
-        name: 'Ladestrom',
-        key: 'charging_current',
-        class: 'current',
-        unit: 'A',
-        states: {
-          state: chargingCurrent
-        }
-      })
-
-      this.emitEntity({
-        name: 'Geladene Energie',
-        key: 'charging_energy',
-        class: 'energy',
-        unit: 'kWh',
-        states: {
-          state: chargedEnergy
-        }
-      })
+    if (values[0] !== 65506) {
+      return
     }
+
+    const boardBatteryVoltage = values[2] / 100
+    const panelVoltage = values[6] / 10
+    const panelPower = values[5]
+    const chargingCurrent = values[1] / 10
+    const chargedEnergy = values[13] / 1000
+    const chargingPower = Math.round(boardBatteryVoltage * chargingCurrent)
+
+    this.emitEntity({
+      name: 'Spannung Bordbatterie',
+      key: 'voltage_board_battery',
+      class: 'voltage',
+      unit: 'V',
+      states: {
+        state: boardBatteryVoltage
+      }
+    })
+
+    this.emitEntity({
+      name: 'Spannung Eingang',
+      key: 'panel_voltage',
+      class: 'voltage',
+      unit: 'V',
+      states: {
+        state: panelVoltage
+      }
+    })
+
+    this.emitEntity({
+      name: 'Leistung Eingang',
+      key: 'panel_power',
+      class: 'power',
+      unit: 'W',
+      states: {
+        state: panelPower
+      }
+    })
+
+    this.emitEntity({
+      name: 'Leistung Ausgang',
+      key: 'charging_power',
+      class: 'power',
+      unit: 'W',
+      states: {
+        state: chargingPower
+      }
+    })
+
+    this.emitEntity({
+      name: 'Ladestrom',
+      key: 'charging_current',
+      class: 'current',
+      unit: 'A',
+      states: {
+        state: chargingCurrent
+      }
+    })
+
+    this.emitEntity({
+      name: 'Geladene Energie',
+      key: 'charging_energy',
+      class: 'energy',
+      unit: 'kWh',
+      states: {
+        state: chargedEnergy
+      }
+    })
   }
 }

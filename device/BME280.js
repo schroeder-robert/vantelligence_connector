@@ -36,38 +36,48 @@ export default class extends Device {
   }
 
   async requestData () {
-    return await this.sensor.readSensorData()
+    try {
+      return await this.sensor.readSensorData()
+    } catch (error) {
+      this.warning(error)
+    }
   }
 
   processMessage (values) {
-    this.emitEntity({
-      name: 'Temperatur',
-      key: 'temperature',
-      class: 'temperature',
-      unit: '°C',
-      states: {
-        state: Math.round(values.temperature_C * 10) / 10
-      }
-    })
+    if (values?.temperature_C) {
+      this.emitEntity({
+        name: 'Temperatur',
+        key: 'temperature',
+        class: 'temperature',
+        unit: '°C',
+        states: {
+          state: Math.round(values.temperature_C * 10) / 10
+        }
+      })
+    }
     
-    this.emitEntity({
-      name: 'Feuchtigkeit',
-      key: 'humidity',
-      class: 'humidity',
-      unit: '%',
-      states: {
-        state: Math.round(values.humidity * 10) / 10
-      }
-    })
+    if (values?.humidity) {
+      this.emitEntity({
+        name: 'Feuchtigkeit',
+        key: 'humidity',
+        class: 'humidity',
+        unit: '%',
+        states: {
+          state: Math.round(values.humidity * 10) / 10
+        }
+      })
+    }
     
-    this.emitEntity({
-      name: 'Druck',
-      key: 'pressure',
-      class: 'pressure',
-      unit: 'hPa',
-      states: {
-        state: Math.round(values.pressure_hPa * 10) / 10
-      }
-    })
+    if (values?.pressure_hPa) {
+      this.emitEntity({
+        name: 'Druck',
+        key: 'pressure',
+        class: 'pressure',
+        unit: 'hPa',
+        states: {
+          state: Math.round(values.pressure_hPa * 10) / 10
+        }
+      })
+    }
   }
 }

@@ -58,6 +58,11 @@ export default class extends Device {
 
   processMessage (buffer) {
     const values = this.decodeBytes(buffer)
+
+    if (!values) {
+      return
+    }
+
     const voltageBoard = values[1] / 100
     const voltageStart = values[2] / 100
     const currentBoard = values[3] / 10

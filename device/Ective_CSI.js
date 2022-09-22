@@ -119,6 +119,10 @@ export default class extends Device {
   }
 
   processMessage (data) {
+    if (!data || !data.length) {
+      return
+    }
+
     this.emitEntity({
       type: 'binary_sensor',
       name: 'Bit #1',
