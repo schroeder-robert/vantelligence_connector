@@ -14,14 +14,17 @@ export default class extends Device {
   }
 
   async connect () {
-    const client = pigpio({ host: 'localhost' })
+    const { connection, pins } = this.config
+    const client = pigpio({
+      host: connection.host
+    })
     const ready = new Promise((resolve, reject) => {
       client.once('connected', resolve)
       client.once('error', reject)
     })
 
     ready.then(async (info) => {
-      this.config.pins.forEach(pin => {
+      pins.forEach(pin => {
         const key = 'pin_' + pin.id
         const type = pin.type || 'in'
         const entityTypes = {

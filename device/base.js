@@ -32,19 +32,44 @@ export default class {
     }
   }
 
+  error (message) {
+    this.log(message, '🛑')
+  }
+
+  warning (message) {
+    this.log(message, '⚠️')
+  }
+
+  info (message) {
+    this.log(message, 'ℹ️')
+  }
+
   emitEntity (entity) {
     if (typeof this.onEntityUpdateCallback === 'function') {
       this.onEntityUpdateCallback(entity)
     }
   }
 
-  async poll (method, time, callback) {
+  async poll (method, interval, callback) {
+    let args = []
+
     callback = typeof callback === 'function' ? callback : () => {}
-    
-    if (typeof this[method] === 'function') {
-      setInterval(async () => callback(await this[method]()), time)
+
+    if (method instanceof Array) {
+      args = method.slice(1)
+      method = method[0]
+    }
+
+    if (typeof method === 'function') {
+      setInterval(async () => callback(await method(...args)), interval)
       
-      callback(await this[method]())
+      callback(await method(...args))
+    }
+    
+    if (typeof method === 'string' && typeof this[method] === 'function') {
+      setInterval(async () => callback(await this[method](...args)), interval)
+      
+      callback(await this[method](...args))
     }
   }
 
@@ -54,7 +79,7 @@ export default class {
     if (typeof this[method] === 'function') {
       return await this[method](value, state)
     } else {
-      this.log('Method "' + chalk.red(method) + '" not found!', '⚠️')
+      this.warning('Method "' + chalk.red(method) + '" not found!')
     }
   }
 

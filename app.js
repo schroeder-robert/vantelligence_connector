@@ -26,7 +26,8 @@ fs.readdir(DEVICE_PATH, async (error, files) => {
       const module = await import(DEVICE_PATH + file)
 
       // development filter
-      // if (!['PCA9685.js'].includes(file)) continue
+      if (['Socketcan.js'].includes(file)) continue
+      //if (!['Pigpio.js'].includes(file)) continue
 
       // build devie class object
       DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default

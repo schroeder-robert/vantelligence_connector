@@ -14,9 +14,9 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection } = this.config
 
-    this.bus = bus.openSync(parseInt(config.bus))
+    this.bus = bus.openSync(parseInt(connection.bus))
 
     this.poll('requestValues', 1000, result => this.processMessage(result))
   }
@@ -40,23 +40,28 @@ export default class extends Device {
   requestValues () {
     const buffer = Buffer.alloc(2)
     
-    this.bus.readI2cBlockSync(ADDRESS, 0x10, buffer.length, buffer)
+    try {
+      this.bus.readI2cBlockSync(ADDRESS, 0x10, buffer.length, buffer)
+    } catch (error) {
+      this.warning(error)
+    }
 
     return buffer
   }
 
   processMessage (buffer) {
     const values = this.decodeBytes(buffer)
-    const lux = Math.round(values[0] / 1.2)
-    
-    this.emitEntity({
-      name: 'Helligkeit',
-      key: 'illuminance',
-      class: 'illuminance',
-      unit: 'lx',
-      states: {
-        state: lux,
-      }
-    })
+
+    if (values[0]) {
+      this.emitEntity({
+        name: 'Helligkeit',
+        key: 'illuminance',
+        class: 'illuminance',
+        unit: 'lx',
+        states: {
+          state: Math.round(values[0] / 1.2),
+        }
+      })
+    }
   }
 }

@@ -14,66 +14,34 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection, values } = this.config
 
     try {
-      this.sensor = await ADS1115.open(parseInt(config.bus), ADDRESS, 'i2c-bus')
+      this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
       this.sensor.gain = 2
     } catch (error) {
       return 'ADS1115 initialization failed: ' + error
     }
 
-    this.poll('requestData', 2000, result => this.processMessage(result))
-  }
+    values.forEach(value => {
+      const range = value.max - value.min
+      
+      this.poll([this.sensor.measure, value.measure], value.interval || 10000, result => {
+        if (result > 32768) {
+          result -= 65536
+        }
 
-  async requestData () {
-    return [
-      await this.sensor.measure('0+GND'),
-      await this.sensor.measure('1+GND'),
-      await this.sensor.measure('2+GND'),
-      await this.sensor.measure('3+GND')
-    ]
-  }
-
-  processMessage (values) {
-    this.emitEntity({
-      name: 'Wert #0',
-      key: 'value0',
-      class: 'temperature',
-      unit: '°C',
-      states: {
-        state: values[0]
-      }
-    })
-    
-    this.emitEntity({
-      name: 'Wert #1',
-      key: 'value1',
-      class: 'temperature',
-      unit: '°C',
-      states: {
-        state: values[1]
-      }
-    })
-    
-    this.emitEntity({
-      name: 'Wert #2',
-      key: 'value2',
-      class: 'temperature',
-      unit: '°C',
-      states: {
-        state: values[2]
-      }
-    })
-    
-    this.emitEntity({
-      name: 'Wert #3',
-      key: 'value3',
-      class: 'temperature',
-      unit: '°C',
-      states: {
-        state: values[3]
-      }
+        result = Math.max(value.min, Math.min(value.max, result))
+        
+        this.emitEntity({
+          name: value.name,
+          key: this.convertNameToKey(value.name),
+          unit: value.unit || '%',
+          states: {
+            state: Math.round(result / range * (value.scale || 100))
+          }
+        })
+      })
     })
   }
 }

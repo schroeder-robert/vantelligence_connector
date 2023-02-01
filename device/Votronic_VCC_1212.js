@@ -14,13 +14,13 @@ export default class extends Device {
   }
 
   async connect () {
-    const config = this.config.connection
+    const { connection } = this.config
 
-    if (config.type !== 'serial') {
+    if (connection.type !== 'serial') {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort(config.port, {
+    this.port = new SerialPort(connection.port, {
       baudRate: 1000,
       autoOpen: false
     })
@@ -58,6 +58,11 @@ export default class extends Device {
 
   processMessage (buffer) {
     const values = this.decodeBytes(buffer)
+
+    if (!values) {
+      return
+    }
+
     const voltageBoard = values[1] / 100
     const voltageStart = values[2] / 100
     const currentBoard = values[3] / 10
