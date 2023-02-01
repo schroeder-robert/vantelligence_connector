@@ -4,6 +4,14 @@
   ],
   "devices": [
     {
+      "name": "HS-Can",
+      "id": "hscan",
+      "class": "Socketcan",
+      "connection": {
+        "bus": "can0"
+      }
+    },
+    {
       "name": "PWM-Controller",
       "id": "pwmcontroller",
       "class": "PCA9685",
@@ -48,7 +56,7 @@
           "name": "Frischwasser",
           "measure": "0+GND",
           "min": 0,
-          "max": 30000,
+          "max": 14200,
           "interval": 2000,
           "scale": 110,
           "unit": "l"
@@ -176,7 +184,7 @@
         {
           "name": "Relais 3",
           "type": "out",
-          "id": 24,
+          "id": 7,
           "inverted": true
         },
         {
@@ -190,6 +198,11 @@
           "type": "out",
           "id": 15,
           "inverted": true
+        },
+        {
+          "name": "Display",
+          "type": "out",
+          "id": 24
         },
         {
           "name": "Licht1",

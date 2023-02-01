@@ -27,6 +27,12 @@ export default class extends Device {
       const range = value.max - value.min
       
       this.poll([this.sensor.measure, value.measure], value.interval || 10000, result => {
+        if (result > 32768) {
+          result -= 65536
+        }
+
+        result = Math.max(value.min, Math.min(value.max, result))
+        
         this.emitEntity({
           name: value.name,
           key: this.convertNameToKey(value.name),
