@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { createServer } from 'http'
 import chalk from 'chalk'
 import mqtt from 'mqtt'
@@ -250,5 +251,21 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
 }
 
 function log (icon, message, device) {
-  console.log((icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message)
+  const content = (icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message
+
+  console.log(content)
+
+  fs.writeFile('./debug.log', content + '\n', { flag: 'a+' }, err => {
+    if (err) {
+      console.error(err);
+    }
+  })
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.log('Unhandled Rejection at:', promise, 'reason:', reason);
+
+  log('💥', 'Unhandled Rejection at:' + promise + 'reason:', reason)
+
+  // Application specific logging, throwing an error, or other logic here
+})

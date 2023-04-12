@@ -107,7 +107,7 @@ export default class extends Device {
       } else {
         return 'Unknown connection type!'
       }
-    })
+    }).catch(console.error)
   }
 
   setPower (state) {
