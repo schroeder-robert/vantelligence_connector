@@ -234,6 +234,12 @@
           "type": "in",
           "id": 4,
           "inverted": true
+        },
+        {
+          "name": "Haupttaster",
+          "type": "in",
+          "pull": "up",
+          "id": 21
         }
       ]
     },
