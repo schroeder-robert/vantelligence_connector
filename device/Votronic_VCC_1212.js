@@ -1,4 +1,5 @@
-import SerialPort from 'serialport'
+import { SerialPort } from 'serialport'
+import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 import Device from './base.js'
 
 export default class extends Device {
@@ -20,7 +21,8 @@ export default class extends Device {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort(connection.port, {
+    this.port = new SerialPort({
+      path: connection.port,
       baudRate: 1000,
       autoOpen: false
     })
@@ -29,17 +31,9 @@ export default class extends Device {
       return error ? error.message : true
     })
 
-    this.port.on('data', data => {
-      this.buffer.push(data)
-    
-      clearTimeout(this.timeout)
-    
-      this.timeout = setTimeout(() => {
-        this.processMessage(Buffer.concat(this.buffer))
-    
-        this.buffer = []
-      }, 100)
-    })
+    const parser = this.port.pipe(new InterByteTimeoutParser({ interval: 100 }))
+
+    parser.on('data', data => this.processMessage(data))
   }
 
   disconnect () {
