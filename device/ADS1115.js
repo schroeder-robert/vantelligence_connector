@@ -23,16 +23,22 @@ export default class extends Device {
       return 'ADS1115 initialization failed: ' + error
     }
 
-    values.forEach(value => {
-      const range = value.max - value.min
-      
-      this.poll([this.sensor.measure, value.measure], value.interval || 10000, result => {
-        if (result > 32768) {
-          result -= 65536
-        }
+    const measure = async () => {
+      const results = []
 
-        result = Math.max(value.min, Math.min(value.max, result))
-        
+      for (const value of values) {
+        results.push(await this.sensor.measure(value.measure))
+      }
+
+      return results
+    }
+
+    this.poll(measure, connection.interval, results => {console.log(results)
+      for (let i in values) {
+        const value = values[i]
+        const range = value.max - value.min
+        const result = Math.max(value.min, Math.min(value.max, results[i] > 32768 ? result[i] - 65536 : results[i]))
+      
         this.emitEntity({
           name: value.name,
           key: this.convertNameToKey(value.name),
@@ -41,7 +47,7 @@ export default class extends Device {
             state: Math.round(result / range * (value.scale || 100))
           }
         })
-      })
+      }
     })
   }
 }
