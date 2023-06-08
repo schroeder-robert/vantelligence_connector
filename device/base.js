@@ -60,16 +60,20 @@ export default class {
       method = method[0]
     }
 
-    if (typeof method === 'function') {
-      setInterval(async () => callback(await method(...args)), interval)
+    try {
+      if (typeof method === 'function') {
+        setInterval(async () => callback(await method(...args)), interval)
+        
+        callback(await method(...args))
+      }
       
-      callback(await method(...args))
-    }
-    
-    if (typeof method === 'string' && typeof this[method] === 'function') {
-      setInterval(async () => callback(await this[method](...args)), interval)
-      
-      callback(await this[method](...args))
+      if (typeof method === 'string' && typeof this[method] === 'function') {
+        setInterval(async () => callback(await this[method](...args)), interval)
+        
+        callback(await this[method](...args))
+      }
+    } catch (error) {
+      this.error(error)
     }
   }
 
@@ -77,7 +81,11 @@ export default class {
     const method = 'set' + this.convertKeyToMethod(entity)
 
     if (typeof this[method] === 'function') {
-      return await this[method](value, state)
+      try {
+        return await this[method](value, state)
+      } catch (error) {
+        this.error(error)
+      }
     } else {
       this.warning('Method "' + chalk.red(method) + '" not found!')
     }
