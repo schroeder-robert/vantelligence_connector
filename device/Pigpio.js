@@ -10,7 +10,7 @@ export default class extends Device {
 
     this.manufacturer = 'Raspberry Pi'
     this.model = 'GPIO'
-    this.version = '1'
+    this.version = '2'
   }
 
   async connect () {
@@ -84,6 +84,7 @@ export default class extends Device {
           INSTANCES[key].modeSet('input')
           INSTANCES[key].notify(emit)
           INSTANCES[key].glitchSet(pin.debounce || 50000)
+          INSTANCES[key].pullUpDown(pin.pull === 'up' ? 2 : (pin.pull === 'down' ? 1 : 0))
           INSTANCES[key].read((error, state) => {
             if (error) {
               console.error(error)
