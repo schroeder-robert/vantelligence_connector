@@ -1,3 +1,4 @@
+import process from 'node:process'
 import { createServer } from 'http'
 import chalk from 'chalk'
 import mqtt from 'mqtt'
@@ -26,11 +27,13 @@ fs.readdir(DEVICE_PATH, async (error, files) => {
       const module = await import(DEVICE_PATH + file)
 
       // development filter
-      if (['Socketcan.js'].includes(file)) continue
+      if (['Socketcan.js', 'Bluetooth.js'].includes(file)) continue
       //if (!['Pigpio.js'].includes(file)) continue
 
       // build devie class object
       DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
+
+      log('✨', 'Device class found: ' + file)
     }
 
     connect()
@@ -125,7 +128,7 @@ async function processConfig (client, data) {
         DEVICE_INSTANCES[device.id] = device
       }
     } else {
-      log('⚠️', 'Unknown device class: ' + config.class)
+      log('⚠️', 'Unknown device class in config: ' + config.class)
     }
   }
 }
@@ -250,5 +253,17 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
 }
 
 function log (icon, message, device) {
-  console.log((icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message)
+  const content = (icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message
+
+  console.log(content)
+
+  fs.writeFile('./debug.log', content + '\n', { flag: 'a+' }, err => {
+    if (err) {
+      console.error(err);
+    }
+  })
 }
+
+process.on('unhandledRejection', (reason, promise) => {
+  log('💥', 'Unhandled Rejection at:' + promise + 'reason:', reason)
+})
