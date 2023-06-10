@@ -4,6 +4,11 @@
   ],
   "devices": [
     {
+      "name": "Bluetooth",
+      "id": "bluetooth",
+      "class": "Bluetooth"
+    },
+    {
       "name": "HS-Can",
       "id": "hscan",
       "class": "Socketcan",
@@ -49,7 +54,8 @@
       "class": "ADS1115",
       "connection": {
         "type": "i2c",
-        "bus": 1
+        "bus": 1,
+        "interval": 3000
       },
       "values": [
         {
@@ -57,8 +63,31 @@
           "measure": "0+GND",
           "min": 0,
           "max": 14200,
-          "interval": 2000,
           "scale": 110,
+          "unit": "l"
+        },
+        {
+          "name": "Abwasser",
+          "measure": "1+GND",
+          "min": 0,
+          "max": 14200,
+          "scale": 80,
+          "unit": "l"
+        },
+        {
+          "name": "A2",
+          "measure": "2+GND",
+          "min": 0,
+          "max": 14200,
+          "scale": 80,
+          "unit": "l"
+        },
+        {
+          "name": "A3",
+          "measure": "3+GND",
+          "min": 0,
+          "max": 14200,
+          "scale": 80,
           "unit": "l"
         }
       ]
@@ -164,7 +193,7 @@
           "inverted": true
         },
         {
-          "name": "Multimedia",
+          "name": "Soundsystem",
           "type": "out",
           "id": 25,
           "inverted": true
@@ -234,6 +263,12 @@
           "type": "in",
           "id": 4,
           "inverted": true
+        },
+        {
+          "name": "Haupttaster",
+          "type": "in",
+          "pull": "up",
+          "id": 21
         }
       ]
     },
