@@ -19,15 +19,7 @@ export default class extends Device {
     const bus = i2c.openSync(parseInt(connection.bus));
     
     this.sensor = new MPU6050(bus, ADDRESS)
-    this.poll('requestValues', 10000, result => this.processMessage(result))
-  }
-
-  requestValues () {
-    try {
-      return this.sensor.readSync()
-    } catch (error) {
-      this.warning(error)
-    }
+    this.poll(1000, () => this.processMessage(this.sensor.readSync()))
   }
 
   processMessage (values) {

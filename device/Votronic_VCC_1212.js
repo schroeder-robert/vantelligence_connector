@@ -40,26 +40,12 @@ export default class extends Device {
     this.port.close()
   }
 
-  decodeBytes (buffer) {
-    const values = []
-
-    for (let i = 0; i < buffer.length; i += 2) {
-      values.push((buffer[i + 1] << 8) | buffer[i])
-    }
-
-    return values
-  }
-
   processMessage (buffer) {
-    const values = this.decodeBytes(buffer)
+    if (buffer.length < 8) return
 
-    if (!values) {
-      return
-    }
-
-    const voltageBoard = values[1] / 100
-    const voltageStart = values[2] / 100
-    const currentBoard = values[3] / 10
+    const voltageBoard = buffer.readInt16LE(2) / 100
+    const voltageStart = buffer.readInt16LE(4) / 100
+    const currentBoard = buffer.readInt16LE(6) / 10
     
     if (voltageStart > 10 && voltageStart < 20) {
       this.emitEntity({

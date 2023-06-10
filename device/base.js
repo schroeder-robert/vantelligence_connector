@@ -50,7 +50,7 @@ export default class {
     }
   }
 
-  async poll (method, interval, callback) {
+  async poll (interval, method, callback) {
     let args = []
 
     callback = typeof callback === 'function' ? callback : () => {}

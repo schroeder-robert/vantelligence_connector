@@ -35,7 +35,7 @@ export default class extends Device {
     
     parser.on('data', data => this.processMessage(data))
 
-    this.poll('requestValues', 10000)
+    this.poll(10000, () => this.port.write(Buffer.from([255, 226, 2, 228])))
   }
 
   disconnect () {
@@ -50,10 +50,6 @@ export default class extends Device {
     }
 
     return values
-  }
-
-  requestValues () {
-    this.port.write(Buffer.from([255, 226, 2, 228]))
   }
 
   processMessage (buffer) {

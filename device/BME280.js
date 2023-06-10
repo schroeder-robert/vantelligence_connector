@@ -32,15 +32,7 @@ export default class extends Device {
       return 'BME280 initialization failed: ' + error
     }
 
-    this.poll('requestData', 10000, result => this.processMessage(result))
-  }
-
-  async requestData () {
-    try {
-      return await this.sensor.readSensorData()
-    } catch (error) {
-      this.warning(error)
-    }
+    this.poll(10000, async () => this.processMessage(await this.sensor.readSensorData()))
   }
 
   processMessage (values) {

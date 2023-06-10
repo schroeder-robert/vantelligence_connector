@@ -18,50 +18,32 @@ export default class extends Device {
 
     this.bus = bus.openSync(parseInt(connection.bus))
 
-    this.poll('requestValues', 1000, result => this.processMessage(result))
+    this.poll(1000, () => {
+      const buffer = Buffer.alloc(2)
+      
+      this.bus.readI2cBlockSync(ADDRESS, 0x10, buffer.length, buffer)
+
+      this.processMessage(buffer)
+    })
   }
 
   disconnect () {
     this.bus.closeSync()
   }
 
-  decodeBytes (buffer) {
-    const values = []
-
-    for (let i = 0; i < buffer.length; i += 2) {
-      const value = (buffer[i] << 8) | buffer[i + 1]
-
-      values.push(value < 0x8000 ? value : value - 0x10000)
-    }
-
-    return values
-  }
-
-  requestValues () {
-    const buffer = Buffer.alloc(2)
-    
-    try {
-      this.bus.readI2cBlockSync(ADDRESS, 0x10, buffer.length, buffer)
-    } catch (error) {
-      this.warning(error)
-    }
-
-    return buffer
-  }
-
   processMessage (buffer) {
-    const values = this.decodeBytes(buffer)
+    if (buffer.length < 1) return
 
-    if (values[0]) {
-      this.emitEntity({
-        name: 'Helligkeit',
-        key: 'illuminance',
-        class: 'illuminance',
-        unit: 'lx',
-        states: {
-          state: Math.round(values[0] / 1.2),
-        }
-      })
-    }
+    const illuminance = Math.round(buffer.readInt16BE(0) / 1.2)
+
+    this.emitEntity({
+      name: 'Helligkeit',
+      key: 'illuminance',
+      class: 'illuminance',
+      unit: 'lx',
+      states: {
+        state: illuminance,
+      }
+    })
   }
 }

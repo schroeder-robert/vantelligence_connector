@@ -23,21 +23,12 @@ export default class extends Device {
       return 'ADS1115 initialization failed: ' + error
     }
 
-    const measure = async () => {
-      const results = []
-
-      for (const value of values) {
-        results.push(await this.sensor.measure(value.measure))
-      }
-
-      return results
-    }
-
-    this.poll(measure, connection.interval, results => {console.log(results)
+    this.poll(connection.interval || 10000, async () => {
       for (let i in values) {
         const value = values[i]
         const range = value.max - value.min
-        const result = Math.max(value.min, Math.min(value.max, results[i] > 32768 ? result[i] - 65536 : results[i]))
+        const raw = await this.sensor.measure(value.measure)
+        const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw))
       
         this.emitEntity({
           name: value.name,
