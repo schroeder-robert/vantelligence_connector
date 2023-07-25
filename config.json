@@ -4,6 +4,11 @@
   ],
   "devices": [
     {
+      "name": "Befehle",
+      "id": "command",
+      "class": "Command"
+    },
+    {
       "name": "Bluetooth",
       "id": "bluetooth",
       "class": "Bluetooth"
@@ -59,35 +64,35 @@
       },
       "values": [
         {
-          "name": "Frischwasser",
+          "name": "A0",
           "measure": "0+GND",
           "min": 0,
-          "max": 14200,
-          "scale": 110,
+          "max": 65535,
+          "scale": 1,
+          "unit": "l"
+        },
+        {
+          "name": "A1",
+          "measure": "1+GND",
+          "min": 0,
+          "max": 65535,
+          "scale": 1,
           "unit": "l"
         },
         {
           "name": "Abwasser",
-          "measure": "1+GND",
-          "min": 0,
-          "max": 14200,
-          "scale": 80,
-          "unit": "l"
-        },
-        {
-          "name": "A2",
           "measure": "2+GND",
-          "min": 0,
-          "max": 14200,
-          "scale": 80,
+          "min": 1400,
+          "max": 14000,
+          "scale": 78,
           "unit": "l"
         },
         {
-          "name": "A3",
+          "name": "Frischwasser",
           "measure": "3+GND",
           "min": 0,
-          "max": 14200,
-          "scale": 80,
+          "max": 14400,
+          "scale": 110,
           "unit": "l"
         }
       ]
@@ -125,7 +130,7 @@
       "class": "Votronic_VCC_1212",
       "connection": {
         "type": "serial",
-        "port": "/dev/ttyUSB1"
+        "port": "/dev/ttyUSBCharger"
       }
     },
     {
@@ -134,7 +139,7 @@
       "class": "Ective_DSC",
       "connection": {
         "type": "serial",
-        "port": "/dev/ttyUSB0"
+        "port": "/dev/ttyUSBSolar"
       }
     },
     {
@@ -157,7 +162,7 @@
       },
       "connection": {
         "type": "serial",
-        "port": "/dev/ttyUSB2"
+        "port": "/dev/ttyUSBHeater"
       }
     },
     {
