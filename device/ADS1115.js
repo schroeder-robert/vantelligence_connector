@@ -28,8 +28,8 @@ export default class extends Device {
         const value = values[i]
         const range = value.max - value.min
         const raw = await this.sensor.measure(value.measure)
-        const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw))
-      
+        const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw)) - value.min
+
         this.emitEntity({
           name: value.name,
           key: this.convertNameToKey(value.name),
