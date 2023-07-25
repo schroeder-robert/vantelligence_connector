@@ -170,8 +170,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Bit #6',
-      key: 'bit_6',
+      name: 'Error 1',
+      key: 'error_1',
       states: {
         state: data[5] ? 'ON' : 'OFF'
       }
@@ -188,8 +188,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Bit #8',
-      key: 'bit_8',
+      name: 'Error 2',
+      key: 'error_2',
       states: {
         state: data[7] ? 'ON' : 'OFF'
       }
