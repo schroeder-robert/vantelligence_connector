@@ -121,7 +121,19 @@ export default class extends Device {
     parser.on('data', data => this.processMessage(data))
 
     this.port.open(error => {
-      return error ? error.message : true
+      if (error) {
+        this.error(error.message)
+        this.info('Retrying in 10s')
+        
+        setTimeout(() => this.connect(), 10000)
+      } else {
+        this.info('Serial connection successful')
+      }
+    })
+    this.port.on('error', error => this.error(error.message))
+    this.port.on('close', () => {
+      this.warning('Lost connection!')
+      this.connect()
     })
     
     this.requestVersion()

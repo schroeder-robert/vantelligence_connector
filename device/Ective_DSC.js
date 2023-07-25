@@ -27,13 +27,25 @@ export default class extends Device {
       autoOpen: false
     })
 
-    this.port.open(error => {
-      return error ? error.message : true
-    })
-
     const parser = this.port.pipe(new InterByteTimeoutParser({ interval: 50 }))
     
     parser.on('data', data => this.processMessage(data))
+
+    this.port.open(error => {
+      if (error) {
+        this.error(error.message)
+        this.info('Retrying in 10s')
+        
+        setTimeout(() => this.connect(), 10000)
+      } else {
+        this.info('Serial connection successful')
+      }
+    })
+    this.port.on('error', error => this.error(error.message))
+    this.port.on('close', () => {
+      this.warning('Lost connection!')
+      this.connect()
+    })
 
     this.poll(10000, () => this.port.write(Buffer.from([255, 226, 2, 228])))
   }
