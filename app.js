@@ -27,8 +27,8 @@ fs.readdir(DEVICE_PATH, async (error, files) => {
       const module = await import(DEVICE_PATH + file)
 
       // development filter
-      if (['Socketcan.js', 'Bluetooth.js'].includes(file)) continue
-      //if (!['Pigpio.js'].includes(file)) continue
+      if (['Socketcan.js'].includes(file)) continue
+      //if (!['ADS1115.js'].includes(file)) continue
 
       // build devie class object
       DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
@@ -265,5 +265,5 @@ function log (icon, message, device) {
 }
 
 process.on('unhandledRejection', (reason, promise) => {
-  log('💥', 'Unhandled Rejection at:' + promise + 'reason:', reason)
+  log('💥', 'Unhandled Rejection at: ' + promise + ' reason:', reason)
 })
