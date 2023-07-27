@@ -38,10 +38,11 @@ export default class extends Device {
         rpio.open(pin.id, rpio.OUTPUT)
 
         // test
-        rpio.write(pin.id, rpio.HIGH)
-        rpio.msleep(100)
-        rpio.write(pin.id, rpio.LOW)
+        // rpio.write(pin.id, rpio.HIGH)
+        // rpio.msleep(100)
+        // rpio.write(pin.id, rpio.LOW)
 
+        console.log('STA', rpio.read(pin.id))
 
       } else if (pin.type === 'in') {
         rpio.open(pin.id, rpio.INPUT, pin.pull === 'up' ? rpio.PULL_UP : (pin.pull === 'down' ? rpio.PULL_DOWN : null))

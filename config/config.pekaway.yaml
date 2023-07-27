@@ -1,0 +1,65 @@
+support:
+- homeassistant
+devices:
+- name: Analogsensor
+  id: analogsensor
+  class: ADS1115
+  connection:
+    type: i2c
+    bus: 1
+    interval: 3000
+  values:
+  - name: A0
+    measure: 0+GND
+    min: 0
+    max: 65535
+    scale: 100
+    unit: "%"
+  - name: A1
+    measure: 1+GND
+    min: 0
+    max: 65535
+    scale: 100
+    unit: "%"
+  - name: A2
+    measure: 2+GND
+    min: 0
+    max: 65535
+    scale: 100
+    unit: "%"
+  - name: A3
+    measure: 3+GND
+    min: 0
+    max: 65535
+    scale: 100
+    unit: "%"
+- name: GPIO
+  id: gpio
+  class: GPIO
+  connection:
+    host: localhost
+  pins:
+  - name: 'Relais #1'
+    type: out
+    id: 17
+  - name: 'Relais #2'
+    type: out
+    id: 27
+  - name: 'Relais #3'
+    type: out
+    id: 22
+  - name: 'Relais #4'
+    type: out
+    id: 10
+  - name: 'Relais #5'
+    type: out
+    id: 9
+  - name: 'Relais #6'
+    type: out
+    id: 11
+  - name: 'Relais #7'
+    type: out
+    id: 0
+  - name: 'Relais #8'
+    type: out
+    id: 5

@@ -3,6 +3,7 @@ import { createServer } from 'http'
 import chalk from 'chalk'
 import mqtt from 'mqtt'
 import fs from 'fs'
+import YAML from 'yaml'
 
 const BASE_TOPIC = 'connector'
 const DEVICE_TOPIC = 'device'
@@ -11,7 +12,7 @@ const DEVICE_PATH = './device/'
 const DEVICE_CLASSES = {}
 const DEVICE_INSTANCES = []
 const HA_BASE_TOPIC = 'homeassistant'
-const CONFIG_FILE = './config.json'
+const CONFIG_FILE = './config/config.yaml'
 
 let HA_DISCOVERY = []
 let SUBSCRIBED_TOPICS = {}
@@ -27,8 +28,8 @@ fs.readdir(DEVICE_PATH, async (error, files) => {
       const module = await import(DEVICE_PATH + file)
 
       // development filter
-      if (['Socketcan.js'].includes(file)) continue
-      //if (!['ADS1115.js'].includes(file)) continue
+      //if (['Socketcan.js'].includes(file)) continue
+      if (!['GPIO.js'].includes(file)) continue
 
       // build devie class object
       DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
@@ -78,7 +79,7 @@ function connect () {
       if (parts[1] === CONFIG_TOPIC) {
         log('✨', 'New config discovered. Processing...')
 
-        processConfig(client, JSON.parse(message))
+        processConfig(client, YAML.parse(message.toString()))
       } else if (SUBSCRIBED_TOPICS[topic] instanceof Object) {
         Object.keys(SUBSCRIBED_TOPICS[topic]).forEach(key => SUBSCRIBED_TOPICS[topic][key](parts[parts.length - 1], message.toString()))
       }
@@ -264,6 +265,6 @@ function log (icon, message, device) {
   })
 }
 
-process.on('unhandledRejection', (reason, promise) => {
-  log('💥', 'Unhandled Rejection at: ' + promise + ' reason:', reason)
-})
+// process.on('unhandledRejection', (reason, promise) => {
+//   log('💥', 'Unhandled Rejection at: ' + promise + ' reason:', reason)
+// })
