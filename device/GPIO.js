@@ -10,15 +10,15 @@ export default class extends Device {
 
     this.manufacturer = 'Raspberry Pi'
     this.model = 'GPIO'
-    this.version = '2'
+    this.version = '1'
   }
 
   async connect () {
-    const { connection, pins } = this.config
+    const { pins } = this.config
 
-    console.log('OK...', rpio.open)
-
-    rpio.init({ mapping: 'gpio' })
+    rpio.init({
+      gpiomem: false
+    })
 
     pins.forEach(pin => {
       const key = 'pin_' + pin.id
@@ -33,21 +33,6 @@ export default class extends Device {
         key,
         type: entityTypes[type]
       }
-
-      if (pin.type === 'out') {
-        rpio.open(pin.id, rpio.OUTPUT)
-
-        // test
-        // rpio.write(pin.id, rpio.HIGH)
-        // rpio.msleep(100)
-        // rpio.write(pin.id, rpio.LOW)
-
-        console.log('STA', rpio.read(pin.id))
-
-      } else if (pin.type === 'in') {
-        rpio.open(pin.id, rpio.INPUT, pin.pull === 'up' ? rpio.PULL_UP : (pin.pull === 'down' ? rpio.PULL_DOWN : null))
-      }
-
       const emit = state => {
         entity.states = {
           state: (state === 1 && !pin.inverted) || (state !== 1 && pin.inverted) ? 'ON' : 'OFF'
@@ -55,6 +40,35 @@ export default class extends Device {
 
         this.emitEntity(entity)
       }
+
+      if (pin.type === 'out') {
+        rpio.open(pin.id, rpio.OUTPUT)
+        rpio.poll(pin.id, () => emit(rpio.read(pin.id)))
+
+        entity.commands = ['command']
+
+        emit(rpio.read(pin.id))
+      } else if (pin.type === 'in') {
+        rpio.open(pin.id, rpio.INPUT, pin.pull === 'up' ? rpio.PULL_UP : (pin.pull === 'down' ? rpio.PULL_DOWN : rpio.PULL_OFF))
+        rpio.poll(pin.id, () => emitInput(rpio.read(pin.id)))
+        
+        this.emitInput(rpio.read(pin.id))
+      } else if (pin.type === 'pwm') {
+        rpio.open(pin.id, rpio.PWM)
+        // rpio.pwmSetClockDivider(4096)
+        // rpio.pwmSetRange(pin.id, 1024)
+        // rpio.pwmSetData(pin.id, 2)
+
+        entity.commands = ['command']
+
+        emit(rpio.read(pin.id))
+      }
+    })
+  }
+
+  emitInput () {
+    this.emitEntity({
+
     })
   }
 
@@ -90,16 +104,6 @@ export default class extends Device {
   //         this.emitEntity(entity)
   //       }
 
-  //       if (type === 'out') {
-  //         INSTANCES[key] = client.gpio(pin.id)
-  //         INSTANCES[key].modeSet('output')
-  //         INSTANCES[key].notify(emit)
-  //         INSTANCES[key].write(pin.inverted ? 1 : 0)
-
-  //         entity.commands = ['command']
-
-  //         emit(pin.inverted ? 1 : 0)
-  //       }
 
   //       if (type === 'pwm') {
   //         INSTANCES[key] = client.gpio(pin.id)
@@ -124,39 +128,25 @@ export default class extends Device {
   //         INSTANCES[key].emit({ state: 'OFF' })
   //       }
 
-  //       if (type === 'in') {
-  //         INSTANCES[key] = client.gpio(pin.id)
-  //         INSTANCES[key].modeSet('input')
-  //         INSTANCES[key].notify(emit)
-  //         INSTANCES[key].glitchSet(pin.debounce || 50000)
-  //         INSTANCES[key].pullUpDown(pin.pull === 'up' ? 2 : (pin.pull === 'down' ? 1 : 0))
-  //         INSTANCES[key].read((error, state) => {
-  //           if (error) {
-  //             console.error(error)
-  //           } else {
-  //             emit(state)
-  //           }
-  //         })
-  //       }
   //     })
   //   }).catch(console.error)
   // }
 
-  // async handle (key, state, value) {
-  //   const id = parseInt(key.split('_')[1])
-  //   const pin = this.config.pins.find(pin => pin.id == id)
+  async handle (key, state, value) {
+    const id = parseInt(key.split('_')[1])
+    const pin = this.config.pins.find(pin => pin.id == id)
     
-  //   if (INSTANCES[key] && pin) {
-  //     if (pin.type === 'pwm') {
-  //       value = JSON.parse(value)
+    if (pin) {
+      if (pin.type === 'pwm') {
+        // value = JSON.parse(value)
 
-  //       INSTANCES[key].analogWrite(value.state === 'ON' ? value.brightness || LIGHT_BRIGHTNESS_SCALE : 0)
-  //       INSTANCES[key].emit(value)
-  //     } else {
-  //       INSTANCES[key].write((value === 'ON' && !pin.inverted) || (value !== 'ON' && pin.inverted) ? 1 : 0)
-  //     }
-  //   }
-  // }
+        // INSTANCES[key].analogWrite(value.state === 'ON' ? value.brightness || LIGHT_BRIGHTNESS_SCALE : 0)
+        // INSTANCES[key].emit(value)
+      } else {
+        rpio.write(id, (value === 'ON' && !pin.inverted) || (value !== 'ON' && pin.inverted) ? rpio.HIGH : rpio.LOW)
+      }
+    }
+  }
 
   // disconnect () {
 

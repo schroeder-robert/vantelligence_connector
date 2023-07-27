@@ -41,25 +41,37 @@ devices:
   pins:
   - name: 'Relais #1'
     type: out
-    id: 17
+    id: 11
   - name: 'Relais #2'
     type: out
-    id: 27
+    id: 13
   - name: 'Relais #3'
     type: out
-    id: 22
+    id: 15
   - name: 'Relais #4'
     type: out
-    id: 10
+    id: 19
   - name: 'Relais #5'
     type: out
-    id: 9
+    id: 21
   - name: 'Relais #6'
     type: out
-    id: 11
+    id: 23
   - name: 'Relais #7'
     type: out
-    id: 0
+    id: 27
   - name: 'Relais #8'
     type: out
-    id: 5
+    id: 29
+  - name: 'Button #1'
+    type: in
+    id: 33
+    pull: up
+    inverted: true
+  - name: 'Button #2'
+    type: in
+    id: 32
+    pull: down
+  - name: 'PWM'
+    type: pwm
+    id: 32

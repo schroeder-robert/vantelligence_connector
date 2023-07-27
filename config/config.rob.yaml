@@ -112,38 +112,29 @@ devices:
   connection:
     type: serial
     port: "/dev/ttyUSBHeater"
-- name: GPIO-NEW
-  id: gpio-new
-  class: GPIO
-  pins:
-  - name: 'Relais #1'
-    type: out
-    id: 18
 - name: GPIO
   id: gpio
-  class: Pigpio
-  connection:
-    host: localhost
+  class: GPIO
   pins:
   - name: Dashcam
     type: out
-    id: 8
+    id: 24
     inverted: true
   - name: Wasserpumpe
     type: out
-    id: 12
+    id: 32
     inverted: true
   - name: Kühlschrank
     type: out
-    id: 16
+    id: 36
     inverted: true
   - name: B2B Laderegler
     type: out
-    id: 20
+    id: 38
     inverted: true
   - name: Soundsystem
     type: out
-    id: 25
+    id: 22
     inverted: true
   - name: Relais 1
     type: out
@@ -151,46 +142,47 @@ devices:
     inverted: true
   - name: Relais 2
     type: out
-    id: 23
+    id: 16
     inverted: true
   - name: Relais 3
     type: out
-    id: 7
+    id: 26
     inverted: true
   - name: Wasserboiler
     type: out
-    id: 14
+    id: 8
     inverted: true
   - name: '230V #2'
     type: out
-    id: 15
+    id: 10
     inverted: true
-  - name: Display
+  - name: 12V Spannungsregler
     type: out
-    id: 24
+    id: 18
   - name: Licht1
     type: pwm
-    id: 5
+    id: 29
   - name: Licht2
     type: pwm
-    id: 6
+    id: 31
   - name: Licht3
     type: pwm
-    id: 13
+    id: 33
   - name: Licht4
     type: pwm
-    id: 19
+    id: 35
   - name: Licht Dachluke
     type: pwm
-    id: 26
+    id: 37
   - name: Schalter Dachluke
     type: in
-    id: 4
+    id: 7
+    pull: up
     inverted: true
   - name: Haupttaster
     type: in
     pull: up
-    id: 21
+    id: 40
 - name: Soundsystem
   id: sound
   class: Pulseaudio
