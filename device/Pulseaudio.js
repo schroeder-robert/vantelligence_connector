@@ -8,7 +8,7 @@ export default class extends Device {
     super(config)
 
     this.manufacturer = 'Raspberry Pi'
-    this.model = 'Volume'
+    this.model = 'Pulseaudio'
     this.version = '1'
     this.client = null
   }
