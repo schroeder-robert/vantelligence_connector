@@ -7,11 +7,11 @@ devices:
 - name: Bluetooth
   id: bluetooth
   class: Bluetooth
-- name: HS-Can
-  id: hscan
-  class: Socketcan
-  connection:
-    bus: can0
+# - name: HS-Can
+#   id: hscan
+#   class: Socketcan
+#   connection:
+#     bus: can0
 - name: PWM-Controller
   id: pwmcontroller
   class: PCA9685
@@ -186,3 +186,28 @@ devices:
   controls:
   - name: Main
     id: Master
+- name: Lichtsteuerung außen
+  id: lichtsteuerung_aussen
+  class: Arduino
+  connection:
+    type: i2c
+    bus: 1
+  lights:
+  - name: 'Fernlicht links'
+  - name: 'Fernlicht rechts'
+  - name: 'Rücklicht links'
+  - name: 'Rücklicht rechts'
+  - name: 'Licht #5'
+  - name: 'Licht #6'
+  - name: 'Licht #7'
+    brightness: true
+  - name: 'Licht #8'
+    brightness: true
+  - name: 'Licht #9'
+    brightness: true
+  - name: 'Licht #10'
+    brightness: true
+  - name: 'Licht #11'
+    brightness: true
+  - name: 'Licht #12'
+    brightness: true
