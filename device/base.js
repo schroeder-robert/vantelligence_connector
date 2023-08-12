@@ -50,7 +50,7 @@ export default class {
     }
   }
 
-  async poll (interval, method, callback) {
+  async poll (time, method, callback) {
     let args = []
 
     callback = typeof callback === 'function' ? callback : () => {}
@@ -60,21 +60,31 @@ export default class {
       method = method[0]
     }
 
-    try {
-      if (typeof method === 'function') {
-        setInterval(async () => callback(await method(...args)), interval)
-        
-        callback(await method(...args))
-      }
-      
-      if (typeof method === 'string' && typeof this[method] === 'function') {
-        setInterval(async () => callback(await this[method](...args)), interval)
-        
-        callback(await this[method](...args))
-      }
-    } catch (error) {
-      this.error(error)
+    if (typeof method === 'string' && typeof this[method] === 'function') {
+      method = this[method]
     }
+
+    if (typeof method === 'function') {
+      const call = async () => {
+        try {
+          const result = await method(...args)
+
+          callback(result)
+        } catch (error) {
+          this.error(error)
+console.log('INT', interval)
+          clearInterval(interval)
+        }
+      }
+
+      const interval = setInterval(call, time)
+      
+      call()
+    }
+  }
+
+  async wait (time) {
+    return new Promise(resolve => setTimeout(resolve, time))
   }
 
   async handle (entity, state, value) {

@@ -1,9 +1,9 @@
 import process from 'node:process'
-import { createServer } from 'http'
 import chalk from 'chalk'
 import mqtt from 'mqtt'
 import fs from 'fs'
 import YAML from 'yaml'
+import { WebSocketServer } from 'ws'
 
 const BASE_TOPIC = 'connector'
 const DEVICE_TOPIC = 'device'
@@ -17,27 +17,47 @@ const CONFIG_FILE = './config/config.yaml'
 let HA_DISCOVERY = []
 let SUBSCRIBED_TOPICS = {}
 let PUBLISH_TOPICS = []
+let WS_CLIENTS = []
 
-// get device class list
-fs.readdir(DEVICE_PATH, async (error, files) => {
-  if (error) {
-    log('⚠️', error)
-  } else {
-    for (let file of files) {
-      // import device class
-      const module = await import(DEVICE_PATH + file)
+try {
+  // get device class list
+  fs.readdir(DEVICE_PATH, async (error, files) => {
+    if (error) {
+      log('⚠️', error)
+    } else {
+      for (let file of files) {
+        // import device class
+        const module = await import(DEVICE_PATH + file)
 
-      // build devie class object
-      DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
+        // build devie class object
+        DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
 
-      log('✨', 'Device class found: ' + file)
+        log('✨', 'Device class found: ' + file)
+      }
+
+      connectMqtt()
+      startWebsocket()
     }
+  })
+} catch (error) {
+  console.log('ERRRRRRRR', error)
+}
 
-    connect()
-  }
-})
+function startWebsocket () {
+  const server = new WebSocketServer({ port: process.env.WEBSOCKET_PORT || 8080 })
 
-function connect () {
+  server.on('connection', client => {
+    WS_CLIENTS.push(client)
+
+    client.on('error', console.error);
+    client.on('message', data => {
+      console.log('received: %s', data)
+    })
+    client.send('welcome, there are others: ' + WS_CLIENTS.length)
+  })
+}
+
+function connectMqtt () {
   const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.split('=')))
   const host = args.host || process.env.MQTT_HOST || 'localhost'
   const options = {
@@ -106,11 +126,17 @@ async function processConfig (client, data) {
 
     if (deviceClass) {
       const device = new deviceClass(config)
+      let result = null
 
       device.onEntityUpdate(entity => processEntity(client, device, entity, data.support))
       device.onMessage((icon, message) => log(icon, message, device))
 
-      const result = await device.connect()
+      try {
+        result = await device.connect()
+      } catch (error) {
+        result = error
+      }
+
       const message = 'connects by ' + chalk.yellow(device.manufacturer + ' ' + device.model) + ': '
 
       if (result === undefined || result === null) {
@@ -140,6 +166,8 @@ function processEntity (client, device, entity, support) {
 
 function publish (client, device, entity, support) {
   const topic = getEntityTopic(device, entity)
+
+  WS_CLIENTS.forEach(c => c.send(JSON.stringify({ topic, entity })))
 
   if (!PUBLISH_TOPICS.includes(topic)) {
     log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(topic) + '"', device)

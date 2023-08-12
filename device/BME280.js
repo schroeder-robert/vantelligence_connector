@@ -15,22 +15,13 @@ export default class extends Device {
 
   async connect () {
     const { connection } = this.config
-    const log = console.log
-
-    console.log = () => {}
 
     this.sensor = new BME280({
       i2cBusNo: parseInt(connection.bus),
       i2cAddress: ADDRESS
     })
 
-    try {
-      await this.sensor.init()
-
-      console.log = log
-    } catch (error) {
-      return 'BME280 initialization failed: ' + error
-    }
+    await this.sensor.init()
 
     this.poll(10000, async () => this.processMessage(await this.sensor.readSensorData()))
   }

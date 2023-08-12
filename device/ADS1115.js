@@ -16,13 +16,9 @@ export default class extends Device {
   async connect () {
     const { connection, values } = this.config
 
-    try {
-      this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
-      this.sensor.gain = 2
-    } catch (error) {
-      return 'ADS1115 initialization failed: ' + error
-    }
-
+    this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
+    this.sensor.gain = 2
+    
     this.poll(connection.interval || 10000, async () => {
       for (let i in values) {
         const value = values[i]
