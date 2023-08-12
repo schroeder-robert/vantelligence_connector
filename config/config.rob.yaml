@@ -195,19 +195,19 @@ devices:
   lights:
   - name: 'Fernlicht links'
   - name: 'Fernlicht rechts'
+  - name: 'Arbeitslicht links'
+  - name: 'Arbeitslicht rechts'
   - name: 'Rücklicht links'
   - name: 'Rücklicht rechts'
-  - name: 'Licht #5'
-  - name: 'Licht #6'
-  - name: 'Licht #7'
+  - name: 'Positionslicht links'
     brightness: true
-  - name: 'Licht #8'
+  - name: 'Positionslicht rechts'
     brightness: true
-  - name: 'Licht #9'
+  - name: 'Blinker vorne links'
     brightness: true
-  - name: 'Licht #10'
+  - name: 'Blinker vorne rechts'
     brightness: true
-  - name: 'Licht #11'
+  - name: 'Blinker hinten links'
     brightness: true
-  - name: 'Licht #12'
+  - name: 'Blinker hinten rechts'
     brightness: true
