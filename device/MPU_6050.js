@@ -16,48 +16,87 @@ export default class extends Device {
 
   async connect () {
     const { connection } = this.config
-    const bus = i2c.openSync(parseInt(connection.bus));
-    
-    this.sensor = new MPU6050(bus, ADDRESS)
-    this.poll(1000, () => this.processMessage(this.sensor.readSync()))
+
+    try {
+      const bus = i2c.openSync(parseInt(connection.bus));
+      
+      this.sensor = new MPU6050(bus, ADDRESS)
+    } catch (error) {
+      this.restart()
+
+      throw error
+    }
+
+    this.poll(100, async () => {
+      let sumX = 0
+      let sumY = 0
+      let data = null
+      const samples = 10
+
+      try {
+        for (let i = 0; i < samples; ++i) {
+          data = this.sensor.readSync()
+          
+          sumX += data.rotation.x
+          sumY += data.rotation.y
+
+          await this.wait(100 / samples)
+        }
+
+        data.rotation.x = sumX / samples
+        data.rotation.y = sumY / samples
+
+        this.processMessage(data)
+      } catch (error) {
+        console.log('SHIT', error.message)
+
+        this.restart()
+
+        throw error
+      }
+    })
+  }
+
+  restart () {
+    setTimeout(() => this.connect(), 3000)
   }
 
   processMessage (values) {
-    if (values?.temp) { 
+    if ('temp' in values) { 
       this.emitEntity({
         name: 'Temperatur',
         key: 'temperature',
         class: 'temperature',
         unit: '°C',
         states: {
-          state: Math.round(values.temp * 10) / 10
+          state: values.temp.toFixed(1)
         }
       })
     }
 
-    if (values?.rotation?.x) { 
+    if ('x' in values?.rotation) { 
       this.emitEntity({
         name: 'Neigung X',
         key: 'tilt_x',
         unit: '°',
         states: {
-          state: Math.round(values.rotation.x * 1000) / 1000
+          state: values.rotation.x.toFixed()
         }
       })
     }
 
-    if (values?.rotation?.y) { 
+    if ('y' in values?.rotation) { 
       this.emitEntity({
         name: 'Neigung Y',
         key: 'tilt_y',
         unit: '°',
         states: {
-          state: Math.round(values.rotation.y * 1000) / 1000
+          state: values.rotation.y.toFixed()
         }
       })
     }
 
-    if (values?.accel?.x) { 
+    if ('x' in values?.accel) { 
       this.emitEntity({
         name: 'G-Kraft X',
         key: 'force_x',
@@ -68,7 +107,7 @@ export default class extends Device {
       })
     }
 
-    if (values?.accel?.y) { 
+    if ('y' in values?.accel) { 
       this.emitEntity({
         name: 'G-Kraft Y',
         key: 'force_y',
@@ -79,7 +118,7 @@ export default class extends Device {
       })
     }
 
-    if (values?.accel?.z) { 
+    if ('z' in values?.accel) { 
       this.emitEntity({
         name: 'G-Kraft Z',
         key: 'force_z',
@@ -90,7 +129,7 @@ export default class extends Device {
       })
     }
 
-    if (values?.gyro?.x) { 
+    if ('x' in values?.gyro) { 
       this.emitEntity({
         name: 'Rotation X',
         key: 'rotation_x',
@@ -101,7 +140,7 @@ export default class extends Device {
       })
     }
 
-    if (values?.gyro?.y) { 
+    if ('y' in values?.gyro) { 
       this.emitEntity({
         name: 'Rotation Y',
         key: 'rotation_y',
@@ -112,13 +151,13 @@ export default class extends Device {
       })
     }
 
-    if (values?.gyro?.z) { 
+    if ('z' in values?.gyro) { 
       this.emitEntity({
         name: 'Rotation Z',
         key: 'rotation_z',
         unit: '°s',
         states: {
-          state: Math.round(values.gyro.z * 100) / 100
+          state: values.gyro.z
         }
       })
     }
