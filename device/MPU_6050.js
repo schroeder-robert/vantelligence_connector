@@ -27,7 +27,7 @@ export default class extends Device {
       throw error
     }
 
-    this.poll(100, async () => {
+    this.poll(1000, async () => {
       let sumX = 0
       let sumY = 0
       let data = null
@@ -40,7 +40,7 @@ export default class extends Device {
           sumX += data.rotation.x
           sumY += data.rotation.y
 
-          await this.wait(100 / samples)
+          await this.wait(1000 / samples)
         }
 
         data.rotation.x = sumX / samples
