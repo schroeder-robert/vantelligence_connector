@@ -79,12 +79,13 @@ export default class extends Device {
     if (channel) {
       if (channel.type === 'light') {
         value = JSON.parse(value)
+        
 
         if (!('brightness' in value)) {
           value.brightness = value.state === 'ON' ? LIGHT_BRIGHTNESS_SCALE : 0
         }
-
-        this.controller.setDutyCycle(id, value.brightness)
+        
+        this.controller.setDutyCycle(id, value.brightness  / LIGHT_BRIGHTNESS_SCALE)
       } else {
         this.controller.setPulseLength(id, Math.round(value / (channel.scale || 180) * (channel.max - channel.min) + channel.min))
       }
