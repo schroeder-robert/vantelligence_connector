@@ -1,7 +1,9 @@
 import ADS1115 from 'ads1115'
 import Device from './base.js'
+import KalmanFilter from 'kalmanjs'
 
 const ADDRESS = 0x48
+const kf = new KalmanFilter({R: 0.01, Q: 3})
 
 export default class extends Device {
   constructor (config) {
@@ -15,6 +17,11 @@ export default class extends Device {
 
   async connect () {
     const { connection, values } = this.config
+    const filters = []
+
+    for (let value of values) {
+      filters.push(value.filter ? new KalmanFilter({ R: 0.01, Q: 3 }) : null)
+    }
 
     this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
     this.sensor.gain = 2
@@ -23,7 +30,12 @@ export default class extends Device {
       for (let i in values) {
         const value = values[i]
         const range = value.max - value.min
-        const raw = await this.sensor.measure(value.measure)
+        let raw = await this.sensor.measure(value.measure)
+
+        if (value.filter) {
+          raw = filters[i].filter(raw).toFixed()
+        }
+
         const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw)) - value.min
 
         this.emitEntity({
