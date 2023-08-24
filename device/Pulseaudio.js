@@ -18,7 +18,7 @@ export default class extends Device {
 
     await this.client.connect()
     
-    this.poll(5000, 'getSinks')
+    this.poll(5000, () => this.getSinks())
   }
 
   async getSinks () {

@@ -138,8 +138,8 @@ export default class extends Device {
     
     this.requestVersion()
 
-    setTimeout(() => this.poll(2000, 'requestStatus'), 1000)
-    setTimeout(() => this.poll(2000, 'requestSettings'), 2000)
+    setTimeout(() => this.poll(2000, () => this.requestStatus()), 1000)
+    setTimeout(() => this.poll(2000, () => this.requestSettings()), 2000)
   }
 
   disconnect () {

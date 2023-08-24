@@ -14,7 +14,7 @@ export default class extends Device {
   async connect () {
     const { connection, values } = this.config
 
-    this.poll(5000, 'getDisplayPower')
+    this.poll(5000, () => this.getDisplayPower())
   }
 
   getDisplayPower () {
