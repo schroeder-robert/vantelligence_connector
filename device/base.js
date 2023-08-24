@@ -72,8 +72,9 @@ export default class {
           callback(result)
         } catch (error) {
           this.error(error)
-console.log('INT', interval)
-          clearInterval(interval)
+
+          // experimental!
+          //clearInterval(interval)
         }
       }
 
