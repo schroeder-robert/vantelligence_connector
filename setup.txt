@@ -2,12 +2,12 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - &&\
+curl -fsSL https://deb.nodesource.com/setup_lts.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
 
-npm install -g node-gyp
+sudo npm install -g node-gyp
 
-docker run -d \
+sudo docker run -d \
   --name mosquitto \
   --restart=unless-stopped \
   -p 1883:1883 \
@@ -17,7 +17,7 @@ docker run -d \
   -v /mosquitto/log \
   eclipse-mosquitto
 
-docker run -d \
+sudo docker run -d \
   --name homeassistant \
   --privileged \
   --restart=unless-stopped \
@@ -26,7 +26,7 @@ docker run -d \
   --network=host \
   ghcr.io/home-assistant/home-assistant:stable
 
-apt-get install git
+sudo apt-get install git
 
 git clone https://github.com/schroeder-robert/vantelligence_connector.git
 
