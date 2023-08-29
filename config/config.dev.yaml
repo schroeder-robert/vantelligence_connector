@@ -1,0 +1,114 @@
+support:
+- homeassistant
+devices:
+# - name: Analogsensor
+#   id: analogsensor
+#   class: ADS1115
+#   connection:
+#     type: i2c
+#     bus: 1
+#     interval: 3000
+#   values:
+#   - name: A0
+#     measure: 0+GND
+#     min: 0
+#     max: 65535
+#     scale: 100
+#     unit: "%"
+#   - name: A1
+#     measure: 1+GND
+#     min: 0
+#     max: 65535
+#     scale: 100
+#     unit: "%"
+#   - name: A2
+#     measure: 2+GND
+#     min: 0
+#     max: 65535
+#     scale: 100
+#     unit: "%"
+#   - name: A3
+#     measure: 3+GND
+#     min: 0
+#     max: 65535
+#     scale: 100
+#     unit: "%"
+- name: GPIO
+  id: gpio
+  class: GPIO
+  connection:
+    host: localhost
+  pins:
+  - name: 'Relais #1'
+    type: out
+    id: 11
+  - name: 'Relais #2'
+    type: out
+    id: 13
+  - name: 'Relais #3'
+    type: out
+    id: 15
+  - name: 'Relais #4'
+    type: out
+    id: 19
+  - name: 'Relais #5'
+    type: out
+    id: 21
+  - name: 'Relais #6'
+    type: out
+    id: 23
+  - name: 'Relais #7'
+    type: out
+    id: 27
+  - name: 'Relais #8'
+    type: out
+    id: 29
+  - name: 'Button #1'
+    type: in
+    id: 33
+    pull: up
+    inverted: true
+  - name: 'Button #2'
+    type: in
+    id: 32
+    pull: down
+  - name: 'PWM'
+    type: pwm
+    id: 32
+# - name: Lichtsteuerung außen
+#   id: lichtsteuerung_aussen
+#   class: Arduino
+#   connection:
+#     type: i2c
+#     bus: 1
+#   lights:
+#   - name: 'Fernlicht links'
+#   - name: 'Fernlicht rechts'
+#   - name: 'Arbeitslicht links'
+#   - name: 'Arbeitslicht rechts'
+#   - name: 'Rücklicht links'
+#   - name: 'Rücklicht rechts'
+#   - name: 'Positionslicht links'
+#     brightness: true
+#   - name: 'Positionslicht rechts'
+#     brightness: true
+#   - name: 'Blinker vorne links'
+#     brightness: true
+#   - name: 'Blinker vorne rechts'
+#     brightness: true
+#   - name: 'Blinker hinten links'
+#     brightness: true
+#   - name: 'Blinker hinten rechts'
+#     brightness: true
+- name: Luftsensor
+  id: luftsensor
+  class: BME280
+  connection:
+    type: i2c
+    bus: 1
+- name: Bewegungssensor
+  id: bewegungssensor
+  class: MPU_6050
+  connection:
+    type: i2c
+    bus: 1
