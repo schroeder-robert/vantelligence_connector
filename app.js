@@ -3,6 +3,9 @@ import chalk from 'chalk'
 import mqtt from 'mqtt'
 import fs from 'fs'
 import YAML from 'yaml'
+import http from 'http'
+import url from 'url'
+import path from 'path'
 import { WebSocketServer } from 'ws'
 
 const BASE_TOPIC = 'connector'
@@ -36,6 +39,7 @@ try {
       }
 
       connectMqtt()
+      startHttp()
       startWebsocket()
     }
   })
@@ -43,17 +47,88 @@ try {
   console.log('ERRRRRRRR', error)
 }
 
+function startHttp () {
+  const host = 'localhost'
+  const port = 8000
+  const server = http.createServer((request, response) => {
+    const types = {
+      '.html': 'text/html',
+      '.css': 'text/css',
+      '.js': 'text/javascript',
+      '.json': 'text/json',
+      '.svg': 'image/svg+xml'
+    }
+
+    let filename = path.join(process.cwd(), 'static', url.parse(request.url).pathname)
+
+    try {
+      if (!fs.existsSync(filename)) throw 404
+      
+      if (fs.statSync(filename).isDirectory()) {
+        filename = path.join(filename, 'index.html')
+
+        if (!fs.existsSync(filename)) throw 404
+      }
+
+      fs.readFile(filename, 'binary', (error, content) => {
+        if (error) {
+          response.write(error)
+          
+          throw 500
+        }
+
+        const headers = {}
+        const contentType = types[path.extname(filename)]
+
+        if (contentType) {
+          headers['Content-Type'] = contentType
+        }
+
+        response.writeHead(200, headers)
+        response.write(content, 'binary')
+        response.end()
+      })
+    } catch (code) {
+      response.writeHead(code, { 'Content-Type': 'text/plain' })
+      
+      switch (code) {
+        case 404:
+          response.write('Error 404: File not found')
+      }
+        
+      response.end()
+    }
+
+  })
+
+  server.listen(port, () => {
+    console.log(`Server is running on http://${host}:${port}`)
+  })
+}
+
 function startWebsocket () {
   const server = new WebSocketServer({ port: process.env.WEBSOCKET_PORT || 8080 })
 
   server.on('connection', client => {
-    WS_CLIENTS.push(client)
+    const connection = {
+      client,
+      topics: []
+    }
 
-    client.on('error', console.error);
+    WS_CLIENTS.push(connection)
+
+    client.on('error', console.error)
     client.on('message', data => {
+      data = JSON.parse(data)
+
+      if ('subscribe' in data && data.subscribe instanceof Array) {
+        connection.topics = data.subscribe
+      }
+
       console.log('received: %s', data)
     })
-    client.send('welcome, there are others: ' + WS_CLIENTS.length)
+
+    //client.send('welcome, there are others: ' + WS_CLIENTS.length)
   })
 }
 
@@ -167,7 +242,11 @@ function processEntity (client, device, entity, support) {
 function publish (client, device, entity, support) {
   const topic = getEntityTopic(device, entity)
 
-  WS_CLIENTS.forEach(c => c.send(JSON.stringify({ topic, entity })))
+  WS_CLIENTS.forEach(c => {
+    if (c.topics.includes(topic)) {
+      c.client.send(JSON.stringify({ topic, entity }))
+    }
+  })
 
   if (!PUBLISH_TOPICS.includes(topic)) {
     log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(topic) + '"', device)
@@ -284,7 +363,7 @@ function log (icon, message, device) {
 
   fs.writeFile('./debug.log', content + '\n', { flag: 'a+' }, err => {
     if (err) {
-      console.error(err);
+      console.error(err)
     }
   })
 }
