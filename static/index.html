@@ -9,17 +9,12 @@
       }
     }
 
-    
     function connect () {
       const ws = new WebSocket('ws://' + window.location.hostname + ':8080')
       const style = document.querySelector(':root').style
-
-      const frontView = document.querySelector('.pics div:nth-child(1) div')
-      const frontViewLabel = document.querySelector('.pics div:nth-child(1) span')
-      const rearView = document.querySelector('.pics div:nth-child(2) div')
-      const rearViewLabel = document.querySelector('.pics div:nth-child(2) span')
-      const sideView = document.querySelector('.pics div:nth-child(3) div')
-      const sideViewLabel = document.querySelector('.pics div:nth-child(3) span')
+      const labelFront = document.querySelector('.axes div:nth-child(1) span')
+      const labelRear = document.querySelector('.axes div:nth-child(2) span')
+      const labelSide = document.querySelector('.axes div:nth-child(3) span')
       let x = 0
       let y = 0
 
@@ -47,13 +42,13 @@
           style.setProperty('--tilt-x-mirror', data.entity.states.state * -1 + 'deg')
           style.setProperty('--tilt-x', data.entity.states.state + 'deg')
 
-          frontViewLabel.innerHTML = (data.entity.states.state * -1) + '&deg;'
-          rearViewLabel.innerHTML = data.entity.states.state + '&deg;'
+          labelFront.innerHTML = data.entity.states.state + '&deg;'
+          labelRear.innerHTML = (data.entity.states.state * -1) + '&deg;'
         }
 
         if (data.topic === 'connector/device/bewegungssensor/tilt_y') {
           style.setProperty('--tilt-y', data.entity.states.state + 'deg')
-          sideViewLabel.innerHTML = data.entity.states.state + '&deg;'
+          labelSide.innerHTML = data.entity.states.state + '&deg;'
         }
       })
     }
@@ -75,7 +70,7 @@
         background-color: #444;
       }
 
-      .pics {
+      .axes {
         display: flex;
         justify-content: space-between;
         width: 100%;
@@ -83,13 +78,12 @@
         overflow: hidden;
       }
 
-      .pics > div {
+      .axes > div {
         width: 30%;
         position: relative;
-        border-color: 1px solid red;
       }
 
-      .pics > div > div {
+      .axes > div > div {
         border: 1px solid #999;
         border-radius: 50%;
         aspect-ratio: 1 / 1;
@@ -98,7 +92,7 @@
         overflow: hidden;
       }
 
-      .pics > div > div:after {
+      .axes > div > div:after {
         position: absolute;
         top: 0;
         bottom: 20%;
@@ -112,33 +106,33 @@
         color: #fff;
       }
 
-      .pics > div:nth-child(1) > div {
-        transform: rotate(var(--tilt-x-mirror));
-      }
-
-      .pics > div:nth-child(1) > div:after {
-        background-image: url(images/front_henry.png);
-      }
-
-      .pics > div:nth-child(2) > div {
+      .axes > div:nth-child(1) > div {
         transform: rotate(var(--tilt-x));
       }
 
-      .pics > div:nth-child(2) > div:after {
+      .axes > div:nth-child(1) > div:after {
+        background-image: url(images/front_henry.png);
+      }
+
+      .axes > div:nth-child(2) > div {
+        transform: rotate(var(--tilt-x-mirror));
+      }
+
+      .axes > div:nth-child(2) > div:after {
         background-image: url(images/heck_henry.png);
       }
 
-      .pics > div:nth-child(3) > div {
+      .axes > div:nth-child(3) > div {
         transform: rotate(var(--tilt-y));
       }
 
-      .pics > div:nth-child(3) > div:after {
+      .axes > div:nth-child(3) > div:after {
         background-image: url(images/seite_henry.png);
         background-size: 75%;
         bottom: 30%;
       }
 
-      .pics > div > span {
+      .axes > div > span {
         background-color: #444;
         color: white;
         text-align: center;
@@ -156,7 +150,7 @@
     </style>
   </head>
   <body>
-    <div class="pics">
+    <div class="axes">
       <div><div></div><span></span></div>
       <div><div></div><span></span></div>
       <div><div></div><span></span></div>
