@@ -67,14 +67,14 @@
         align-items: center;
         min-height: 100%;
         margin: 0;
-        background-color: #444;
+        background-color: black;
       }
 
       .axes {
         display: flex;
         justify-content: space-between;
         width: 100%;
-        padding: 50px;
+        padding: 5%;
         overflow: hidden;
       }
 
@@ -84,33 +84,43 @@
       }
 
       .axes > div > div {
-        border: 1px solid #999;
+        border: 0.5vw solid #999;
         border-radius: 50%;
         aspect-ratio: 1 / 1;
         transition: transform 1000ms;
         position: relative;
         overflow: hidden;
+        background: linear-gradient(0deg, rgba(101,175,209,1) 50%, rgba(53,136,235,1) 100%);
       }
 
-      .axes > div > div:after {
+      .axes > div > div::before {
         position: absolute;
         top: 0;
-        bottom: 20%;
+        bottom: 23%;
         left: 0;
         right: 0;
         background-size: 50%;
         background-repeat: no-repeat;
         background-position: center bottom;
-        background-color: #65afd1;
         content: '';
-        color: #fff;
+      }
+
+      .axes > div > div::after {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #746853;
+        content: '';
+        height: 23%;
+        border-top: 1px solid #5e5545;
       }
 
       .axes > div:nth-child(1) > div {
         transform: rotate(var(--tilt-x));
       }
 
-      .axes > div:nth-child(1) > div:after {
+      .axes > div:nth-child(1) > div::before {
         background-image: url(images/front_henry.png);
       }
 
@@ -118,7 +128,7 @@
         transform: rotate(var(--tilt-x-mirror));
       }
 
-      .axes > div:nth-child(2) > div:after {
+      .axes > div:nth-child(2) > div::before {
         background-image: url(images/heck_henry.png);
       }
 
@@ -126,25 +136,31 @@
         transform: rotate(var(--tilt-y));
       }
 
-      .axes > div:nth-child(3) > div:after {
+      .axes > div:nth-child(3) > div::before {
+        bottom: 33%;
         background-image: url(images/seite_henry.png);
         background-size: 75%;
-        bottom: 30%;
+      }
+
+      .axes > div:nth-child(3) > div::after {
+        height: 33%;
       }
 
       .axes > div > span {
+        box-sizing: border-box;
         background-color: #444;
         color: white;
-        text-align: center;
-        width: 5vw;
-        height: 5vw;
-        line-height: 5vw;
-        font-size: 2vw;
+        text-align: right;
+        width: 8vw;
+        height: 8vw;
+        line-height: 8vw;
+        font-size: 4vw;
         position: absolute;
         border-radius: 50%;
         left: 50%;
         bottom: 0;
-        transform: translate(-50%, 50%);
+        transform: translate(-50%, 30%);
+        padding-right: 3%;
       }
 
     </style>
