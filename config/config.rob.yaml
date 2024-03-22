@@ -197,16 +197,16 @@ devices:
   - name: 'Arbeitslicht links'
   - name: 'Fernlicht rechts'
   - name: 'Rücklicht links'
-  - name: 'Rücklicht rechts'
+  - name: 'Blinker vorne links'
   - name: 'Blinker vorne rechts'
     brightness: true
   - name: 'Positionslicht rechts'
     brightness: true
   - name: 'Blinker hinten links'
     brightness: true
-  - name: 'Blinker hinten rechts'
-    brightness: true
   - name: 'Positionslicht links'
     brightness: true
-  - name: 'Blinker vorne links'
+  - name: 'Blinker hinten rechts'
+    brightness: true
+  - name: 'Rücklicht rechts'
     brightness: true
