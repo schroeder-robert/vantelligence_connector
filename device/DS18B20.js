@@ -5,13 +5,15 @@ export default class extends Device {
   constructor (config) {
     super(config)
     
-    this.manufacturer = '???'
+    this.manufacturer = 'Dallas'
     this.model = 'DS18B20'
     this.version = '1'
   }
 
   async connect () {
-    this.poll(1000, async () => {
+    const { interval } = this.config
+
+    this.poll(interval, async () => {
       this.emitEntity({
         name: 'Temperatur',
         key: 'temperature',

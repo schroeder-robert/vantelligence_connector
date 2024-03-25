@@ -4,13 +4,14 @@ devices:
 - name: Temperatursensor
   id: temperatursensor
   class: DS18B20
+  interval: 30000
 - name: Analogsensor
   id: analogsensor
   class: ADS1115
   connection:
     type: i2c
     bus: 1
-    interval: 3000
+  interval: 3000
   values:
   - name: A0
     measure: 0+GND

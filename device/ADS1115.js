@@ -16,7 +16,7 @@ export default class extends Device {
   }
 
   async connect () {
-    const { connection, values } = this.config
+    const { connection, interval, values } = this.config
     const filters = []
 
     for (let value of values) {
@@ -26,7 +26,7 @@ export default class extends Device {
     this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
     this.sensor.gain = 2
     
-    this.poll(connection.interval || 10000, async () => {
+    this.poll(interval || 10000, async () => {
       for (let i in values) {
         const value = values[i]
         const range = value.max - value.min
