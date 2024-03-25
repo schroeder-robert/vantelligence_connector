@@ -17,31 +17,25 @@ devices:
     min: 0
     max: 65535
     scale: 100
-    unit: l
+    unit: "%"
   - name: A1
     measure: 1+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
-  - name: Abwasser
+    unit: "%"
+  - name: A2
     measure: 2+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
-  - name: Frischwasser
+    unit: "%"
+  - name: A3
     measure: 3+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
-- name: Bewegungssensor
-  id: bewegungssensor
-  class: MPU_6050
-  connection:
-    type: i2c
-    bus: 1
+    unit: "%"
 - name: I/O Expander
   id: ioexpander
   class: MCP23017
@@ -116,3 +110,9 @@ devices:
   - name: Kanal 3+4
     id: 35
     type: out
+- name: Bewegungssensor
+  id: bewegungssensor
+  class: MPU_6050
+  connection:
+    type: i2c
+    bus: 1
