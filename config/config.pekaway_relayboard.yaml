@@ -1,6 +1,9 @@
 support:
 - homeassistant
 devices:
+- name: Temperatursensor
+  id: temperatursensor
+  class: DS18B20
 - name: Analogsensor
   id: analogsensor
   class: ADS1115
@@ -36,8 +39,6 @@ devices:
 - name: GPIO
   id: gpio
   class: GPIO
-  connection:
-    host: localhost
   pins:
   - name: 'Relais #1'
     type: out
@@ -63,15 +64,3 @@ devices:
   - name: 'Relais #8'
     type: out
     id: 29
-  - name: 'Button #1'
-    type: in
-    id: 33
-    pull: up
-    inverted: true
-  - name: 'Button #2'
-    type: in
-    id: 32
-    pull: down
-  - name: 'PWM'
-    type: pwm
-    id: 32
