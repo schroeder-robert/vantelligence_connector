@@ -17,25 +17,25 @@ devices:
     min: 0
     max: 65535
     scale: 100
-    unit: l
+    unit: "%"
   - name: A1
     measure: 1+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
-  - name: Abwasser
+    unit: "%"
+  - name: A2
     measure: 2+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
-  - name: Frischwasser
+    unit: "%"
+  - name: A3
     measure: 3+GND
     min: 0
     max: 65535
     scale: 100
-    unit: l
+    unit: "%"
 - name: I/O Expander
   id: ioexpander
   class: MCP23017
