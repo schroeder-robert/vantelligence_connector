@@ -30,22 +30,27 @@ export default class extends Device {
       for (let i in values) {
         const value = values[i]
         const range = value.max - value.min
-        let raw = await this.sensor.measure(value.measure)
 
-        if (value.filter) {
-          raw = filters[i].filter(raw).toFixed()
-        }
+        try {
+          let raw = await this.sensor.measure(value.measure)
 
-        const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw)) - value.min
-
-        this.emitEntity({
-          name: value.name,
-          key: this.convertNameToKey(value.name),
-          unit: value.unit || '%',
-          states: {
-            state: Math.round(result / range * (value.scale || 100))
+          if (value.filter) {
+            raw = filters[i].filter(raw).toFixed()
           }
-        })
+
+          const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw)) - value.min
+
+          this.emitEntity({
+            name: value.name,
+            key: this.convertNameToKey(value.name),
+            unit: value.unit || '%',
+            states: {
+              state: Math.round(result / range * (value.scale || 100))
+            }
+          })
+        } catch (error) {
+          this.error(error.message)
+        }
       }
     })
   }
