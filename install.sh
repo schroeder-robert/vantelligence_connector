@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sudo echo "dtoverlay=gpio-no-irq" >> "/boot/config.txt"
+echo "dtoverlay=gpio-no-irq" >> "/boot/config.txt"
 
 # Git installation
 echo "Installing Git"
@@ -10,8 +10,8 @@ apt-get install git
 # Node.js installation
 echo "Installing Node.js"
 
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
-sudo apt-get install -y nodejs
+curl -fsSL https://deb.nodesource.com/setup_18.x | -E bash - &&\
+apt-get install -y nodejs
 
 npm install -g node-gyp
 
@@ -26,7 +26,7 @@ npm install
 
 # Docker installation
 # curl -fsSL https://get.docker.com -o get-docker.sh
-# sudo sh get-docker.sh
+# sh get-docker.sh
 
 # # Starting Mosquitto container
 # docker run -d \
