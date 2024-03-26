@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo echo "dtoverlay=gpio-no-irq" >> "/boot/config.txt"
+
 # Git installation
 echo "Installing Git"
 
@@ -8,7 +10,7 @@ apt-get install git
 # Node.js installation
 echo "Installing Node.js"
 
-curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - &&\
+curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - &&\
 sudo apt-get install -y nodejs
 
 npm install -g node-gyp
@@ -16,9 +18,13 @@ npm install -g node-gyp
 # Repo cloning
 echo "Cloning repo"
 
-git clone https://github.com/schroeder-robert/vantelligence_connector.git
+git clone https://github.com/schroeder-robert/vantelligence_connector.git connector
 
-# # Docker installation
+cd connector
+
+npm install
+
+# Docker installation
 # curl -fsSL https://get.docker.com -o get-docker.sh
 # sudo sh get-docker.sh
 
