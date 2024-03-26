@@ -41,7 +41,7 @@ export default class extends Device {
       if (pin.type === 'in') {
         await this.mcp.inputPin(pin.id, false, false)
 
-        this.emitSensor(pin, await this.mcp.getPinValue(pin.id), )
+        this.emitSensor(pin, await this.mcp.getPinValue(pin.id))
       }
 
       if (pin.type === 'out') {
