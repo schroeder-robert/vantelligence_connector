@@ -16,7 +16,7 @@ export default class extends Device {
     const { connection, pins } = this.config
     const bus = i2c.openSync(connection.bus)
     
-    this.mcp = new MCP23017(bus, connection.address)
+    this.mcp = new MCP23017(bus, connection.address || 0x20)
     
     process.on('SIGINT', async () => {
       await this.mcp.close()

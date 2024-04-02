@@ -2,7 +2,6 @@ import ADS1115 from 'ads1115'
 import Device from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-const ADDRESS = 0x48
 const kf = new KalmanFilter({R: 0.01, Q: 3})
 
 export default class extends Device {
@@ -23,7 +22,7 @@ export default class extends Device {
       filters.push(value.filter ? new KalmanFilter({ R: 0.01, Q: 3 }) : null)
     }
 
-    this.sensor = await ADS1115.open(parseInt(connection.bus), ADDRESS, 'i2c-bus')
+    this.sensor = await ADS1115.open(parseInt(connection.bus), connection.address || 0x48, 'i2c-bus')
     this.sensor.gain = 2
     
     this.poll(interval || 10000, async () => {

@@ -3,7 +3,6 @@ import MPU6050 from 'i2c-mpu6050'
 import Device from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-const ADDRESS = 0x68
 const filterRotationX = new KalmanFilter({ R: 0.01, Q: 1 })
 const filterRotationY = new KalmanFilter({ R: 0.01, Q: 1 })
 const filterAccelX = new KalmanFilter({ R: 0.01, Q: 3 })
@@ -30,7 +29,7 @@ export default class extends Device {
     try {
       const bus = i2c.openSync(parseInt(connection.bus));
       
-      this.sensor = new MPU6050(bus, ADDRESS)
+      this.sensor = new MPU6050(bus, connection.address || 0x68)
     } catch (error) {
       this.restart()
 

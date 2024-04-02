@@ -1,8 +1,6 @@
 import bus from 'i2c-bus'
 import Device from './base.js'
 
-const ADDRESS = 0x23
-
 export default class extends Device {
   constructor (config) {
     super(config)
@@ -21,7 +19,7 @@ export default class extends Device {
     this.poll(1000, () => {
       const buffer = Buffer.alloc(2)
       
-      this.bus.readI2cBlockSync(ADDRESS, 0x10, buffer.length, buffer)
+      this.bus.readI2cBlockSync(connection.address || 0x23, 0x10, buffer.length, buffer)
 
       this.processMessage(buffer)
     })

@@ -2,7 +2,6 @@ import bus from 'i2c-bus'
 import PCA9685 from 'pca9685'
 import Device from './base.js'
 
-const ADDRESS = 0x40
 const LIGHT_BRIGHTNESS_SCALE = 255
 
 export default class extends Device {
@@ -22,7 +21,7 @@ export default class extends Device {
       try {
         let options = {
           i2c: bus.openSync(connection.bus),
-          address: ADDRESS,
+          address: connection.address || 0x40,
           frequency: 120,
           debug: false
         }
