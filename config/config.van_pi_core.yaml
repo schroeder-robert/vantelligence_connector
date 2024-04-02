@@ -117,3 +117,4 @@ devices:
   connection:
     type: i2c
     bus: 1
+    address: 0x69

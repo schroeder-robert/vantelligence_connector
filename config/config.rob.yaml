@@ -51,7 +51,7 @@ devices:
   connection:
     type: i2c
     bus: 1
-    interval: 3000
+  interval: 3000
   values:
   - name: A0
     measure: 0+GND
