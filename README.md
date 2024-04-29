@@ -288,6 +288,20 @@ A 2 kW diesel heater. It is connected by serial interface.
 
 ### Raspberry Pi GPIO
 
+**⚠ Important System Requirements**
+
+Disable GPIO interrupts ([source](https://github.com/jperkin/node-rpio?tab=readme-ov-file#disable-gpio-interrupts))
+
+If running a newer Raspbian release, you will need to add the following line to
+`/boot/config.txt` and reboot:
+
+```
+dtoverlay=gpio-no-irq
+```
+
+Without this you may see crashes with newer kernels when trying to poll for pin
+changes.
+
 Use GPIO pins of a Raspberry Pi as input, output or pwm as swi.
 
     - name: GPIO
