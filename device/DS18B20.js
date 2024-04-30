@@ -14,14 +14,17 @@ export default class extends Device {
     const { interval } = this.config
 
     this.poll(interval, async () => {
-      this.emitEntity({
-        name: 'Temperatur',
-        key: 'temperature',
-        class: 'temperature',
-        unit: '°C',
-        states: {
-          state: sensor.readSimpleC()?.toFixed(1) || 0
-        }
+      const temps = sensor.readAllC(1);
+      temps.map(({ id, t }) => {
+        this.emitEntity({
+          name: 'Temperatur',
+          key: id,
+          class: 'temperature',
+          unit: '°C',
+          states: {
+            state: t || 0
+          }
+        })
       })
     })
   }
