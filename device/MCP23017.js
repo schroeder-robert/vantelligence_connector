@@ -39,13 +39,13 @@ export default class extends Device {
       const pin = pins[p]
 
       if (pin.type === 'in') {
-        await this.mcp.inputPin(pin.id, false, false)
+        await this.mcp.inputPin(pin.id, !!pin.inverted)
 
         this.emitSensor(pin, await this.mcp.getPinValue(pin.id))
       }
 
       if (pin.type === 'out') {
-        await this.mcp.outputPin(pin.id, false)
+        await this.mcp.outputPin(pin.id, !!pin.inverted, !!pin.active)
 
         this.emitSwitch(pin, false)
       }
