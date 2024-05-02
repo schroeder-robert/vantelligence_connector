@@ -196,6 +196,12 @@ async function processConfig (client, data) {
   SUBSCRIBED_TOPICS = {}
   PUBLISH_TOPICS = []
 
+  if (data.devices?.length < 1) {
+    log('✨', 'No devices found')
+
+    return
+  }
+
   for (let config of data.devices) {
     const deviceClass = DEVICE_CLASSES[config.class]
 
