@@ -18,6 +18,8 @@
     "kalmanjs": "^1.1.0",
     "mqtt": "^4.3.7",
     "nodemon": "^2.0.15",
+    "oled-font-5x7": "^1.0.3",
+    "oled-i2c-bus": "^1.0.12",
     "pca9685": "^5.0.0",
     "pigpio-client": "^1.5.2",
     "pulseaudio.js": "^1.3.1",
