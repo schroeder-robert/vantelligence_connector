@@ -299,10 +299,11 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   HA_DISCOVERY.push(topic)
 
   const id = device.id + '_' + entity.key
-  const type = entity.type || 'sensor'
+  let type = entity.type || 'sensor'
   const config = {
     name: entity.name,
     unique_id: id,
+    device_class: entity.class,
     device: {
       name: device.name,
       model: device.model,
@@ -325,7 +326,6 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   }
 
   if (type === 'sensor') {
-    config.device_class = entity.class
     config.unit_of_measurement = entity.unit
   }
   
@@ -351,12 +351,25 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
     config.min = entity.min
     config.max = entity.max
     config.step = entity.step
+    config.unit_of_measurement = entity.unit
   }
   
   if (type === 'light') {
     config.brightness_scale = entity.brightnessScale
     config.schema = 'json'
     config.brightness = entity.brightness
+  }
+  
+  if (type === 'tracker') {
+    type = 'device_tracker'
+
+    config.icon = entity.icon
+    config.payload_home = 'home',
+    config.payload_not_home = 'not_home'
+  }
+
+  if (type === 'event') {
+    config.event_types = entity.events
   }
 
   client.publish([HA_BASE_TOPIC, type, id, 'config'].join('/'), JSON.stringify(config), { retain: true })
