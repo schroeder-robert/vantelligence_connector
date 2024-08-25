@@ -1,4 +1,6 @@
 import chalk from 'chalk'
+import { SerialPort } from 'serialport'
+import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 
 export default class {
   constructor (config) {
@@ -50,35 +52,24 @@ export default class {
     }
   }
 
-  async poll (time, method, callback) {
-    let args = []
-
-    callback = typeof callback === 'function' ? callback : () => {}
-
-    if (method instanceof Array) {
-      args = method.slice(1)
-      method = method[0]
-    }
-
-    if (typeof method === 'string' && typeof this[method] === 'function') {
-      method = this[method]
-    }
-
+  async poll (time, method, interval) {
     if (typeof method === 'function') {
       const call = async () => {
+        // console.log(this.id)
         try {
-          const result = await method(...args)
+          await method()
+        } catch (e) {
+          this.error('Poll error: ' + e)
+        }
 
-          callback(result)
-        } catch (error) {
-          this.error(error)
-
-          // experimental!
-          //clearInterval(interval)
+        if (!interval) {
+          setTimeout(call, time)
         }
       }
 
-      const interval = setInterval(call, time)
+      if (!!interval) {
+        setInterval(call, time)
+      }
       
       call()
     }
@@ -110,5 +101,63 @@ export default class {
 
   convertNameToKey (value) {
     return String(value).toLowerCase().replace(/[ ]/g, '_')
+  }
+
+  createSerialConnection (options) {
+    let port = null
+    let parser = null
+
+    const connect = () => {
+      port = new SerialPort(Object.assign({ autoOpen: false }, options))
+      parser = port.pipe(new InterByteTimeoutParser({ interval: 100 }))
+
+      port.open(error => {
+        if (error) {
+          this.error(error.message)
+          this.info('Retrying in 10s')
+          
+          setTimeout(connect, 10000)
+        } else {
+          this.info('Serial connection successful')
+        }
+      })
+      port.on('error', error => this.error(error.message))
+      port.on('close', () => {
+        this.warning('Lost connection!')
+        
+        connect()
+      })  
+    }
+
+    connect()
+
+    return function (bytes) {
+      return new Promise((resolve, reject) => {
+
+        try {
+          let timeout = setTimeout(() => reject('request timeout'), 3000)
+
+          parser.once('data', data => {
+            clearTimeout(timeout)
+            resolve(data)
+          })
+
+          port.write(Buffer.from(bytes), error => {
+            if (error) {
+              this.error(error)
+    
+              reject('error')
+            } else {
+              clearTimeout(timeout)
+              timeout = setTimeout(() => reject('response timeout'), 3000)
+            }
+          })
+        } catch (e) {
+          console.log(e)
+
+          reject('catch')
+        }
+      })
+    }
   }
 }
