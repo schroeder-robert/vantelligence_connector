@@ -1,5 +1,3 @@
-import { SerialPort } from 'serialport'
-import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 import Device from './base.js'
 
 const TEMP_MIN = 0
