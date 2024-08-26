@@ -83,6 +83,10 @@ const STATUS_OPTIONS = {
   '4.0': 'Abschaltung'
 }
 
+const ERROR_PROCESS_STATUS_MESSAGE = 'Cannot process status message: '
+const ERROR_PROCESS_SETTINGS_MESSAGE = 'Cannot process settings message: '
+const ERROR_PROCESS_TEMPERATURE_MESSAGE = 'Cannot process temperature message: '
+
 export default class extends Device {
   constructor (config) {
     super(config)
@@ -101,6 +105,7 @@ export default class extends Device {
       control: CONTROL_OPTIONS,
       sensor: SENSOR_OPTIONS
     }
+    this.sendSerial = null
   }
 
   async connect () {
@@ -110,92 +115,64 @@ export default class extends Device {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort({
-      path: connection.port,
-      baudRate: 9600,
-      autoOpen: false
+    this.sendSerial = this.createSerialConnection({ path: connection.port, baudRate: 9600 })
+    this.processMessage(await this.requestVersion())
+    this.poll(2000, async () => {
+      this.processMessage(await this.requestStatus())
+      this.processMessage(await this.requestSettings())
     })
-
-    const parser = this.port.pipe(new InterByteTimeoutParser({ interval: 100 }))
-    
-    parser.on('data', data => this.processMessage(data))
-
-    this.port.open(error => {
-      if (error) {
-        this.error(error.message)
-        this.info('Retrying in 10s')
-        
-        setTimeout(() => this.connect(), 10000)
-      } else {
-        this.info('Serial connection successful')
-      }
-    })
-    this.port.on('error', error => this.error(error.message))
-    this.port.on('close', () => {
-      this.warning('Lost connection!')
-      this.connect()
-    })
-    
-    this.requestVersion()
-
-    setTimeout(() => this.poll(2000, () => this.requestStatus()), 1000)
-    setTimeout(() => this.poll(2000, () => this.requestSettings()), 2000)
-  }
-
-  disconnect () {
-    this.port.close()
   }
 
   requestStatus () {
-    this.send('status')
+    return this.send('status')
   }
 
   requestSettings () {
-    this.send('settings')
+    return this.send('settings')
   }
 
   requestVersion () {
-    this.send('version')
+    return this.send('version')
   }
 
   requestDiagReport1 () {
-    this.send('report', Buffer.from([0x00, 0x40, 0x40]))
+    return this.send('report', Buffer.from([0x00, 0x40, 0x40]))
   }
 
   requestDiagReport2 () {
-    this.send('report', Buffer.from([0x00, 0x80, 0x40]))
+    return this.send('report', Buffer.from([0x00, 0x80, 0x40]))
   }
 
   requestDiagReport3 () {
-    this.send('report', Buffer.from([0x00, 0xC0, 0x40]))
+    return this.send('report', Buffer.from([0x00, 0xC0, 0x40]))
   }
 
   updateSettings () {
-    this.send('settings', this.settings)
+    return this.send('settings', this.settings)
   }
 
   startDiag () {
-    this.send('diag_control', Buffer.from([0x01]))
+    return this.send('diag_control', Buffer.from([0x01]))
   }
 
   stopDiag () {
-    this.send('diag_control', Buffer.from([0x00]))
+    return this.send('diag_control', Buffer.from([0x00]))
   }
 
   turnOn (fanOnly) {
     if (fanOnly) {
-      this.send('fan_only', Buffer.from([0x00, 0x00, this.settings[5], 0xFF]))
+      return this.send('fan_only', Buffer.from([0x00, 0x00, this.settings[5], 0xFF]))
     } else {
-      this.send('heat', this.settings)
+      return this.send('heat', this.settings)
     }
   }
 
   turnOff () {
-    this.send('off')
+    return this.send('off')
   }
 
   setTemperatureCurrent (value) {
-    this.send('temperature', Buffer.from([parseInt(value)]))
+    return this.send('temperature', Buffer.from([parseInt(value)]))
   }
 
   setWorkTime (value) {
@@ -259,13 +236,13 @@ export default class extends Device {
 
     const id = Object.keys(MESSAGE_IDS)[Object.values(MESSAGE_IDS).indexOf(key)]
     const header = Buffer.from([0xAA, 0x03, payload.length, 0x00, id])
-    const crc = this.calcCrc(Buffer.concat([header, payload]))
-    const buffer = Buffer.concat([header, payload, crc])
+    const checksum = this.calcChecksum(Buffer.concat([header, payload]))
+    const buffer = Buffer.concat([header, payload, checksum])
 
-    this.port.write(buffer)
+    return this.sendSerial(buffer)
   }
 
-  calcCrc (bytes) {
+  calcChecksum (bytes) {
     let crc = 0xFFFF
     const buffer = Buffer.alloc(2)
     
@@ -292,7 +269,7 @@ export default class extends Device {
   processMessage (buffer) {
     const type = MESSAGE_TYPES[buffer[1]] || buffer[1]
     const length = buffer[2]
-    const values = buffer.slice(5, -2)
+    const payload = buffer.slice(5, -2)
     const checksum = buffer.slice(-2)
     let id
 
@@ -307,212 +284,244 @@ export default class extends Device {
     }
 
     if (type === 'response') {
-      if (id === 'temperature') {
-        this.emitEntity({
-          name: 'Temperatur Bedienpanel',
-          key: 'temperature_panel',
-          class: 'temperature',
-          unit: '°C',
-          states: {
-            state: values[0]
-          }
-        })
-      }
-
-      if (id === 'version') {
-        this.version = values.slice(0, 4).map(value => parseInt(value)).join('.')
-        
-        this.emitEntity({
-          name: 'Blackbox-Version',
-          key: 'blackbox_version',
-          states: {
-            state: parseInt(values[4])
-          }
-        })
-      }
-      
-      if (id === 'settings') {
-        const workTime = values.slice(0, 1)[0] === 0xFF ? 0 : ((values.slice(0, 1)[0] << 8) | values.slice(1, 2)[0]) / 60
-        const sensor = values.slice(2, 3)[0]
-        const targetTemperature = values.slice(3, 4)[0]
-        const mode = values.slice(4, 5)[0]
-        const level = values.slice(5, 6)[0]
-
-        this.settings = values
-
-        this.emitEntity({
-          type: 'number',
-          name: 'Laufzeit',
-          key: 'work_time',
-          min: 0,
-          max: 12,
-          step: 0.5,
-          commands: ['command'],
-          states: {
-            state: workTime
-          }
-        })
-
-        this.emitEntity({
-          type: 'select',
-          name: 'Sensor',
-          key: 'sensor',
-          options: SENSOR_OPTIONS,
-          commands: ['command'],
-          states: {
-            state: SENSOR_OPTIONS[sensor]
-          }
-        })
-
-        this.emitEntity({
-          type: 'number',
-          name: 'Temperatur Sollwert',
-          key: 'temperature_target',
-          min: TEMP_MIN,
-          max: TEMP_MAX,
-          commands: ['command'],
-          states: {
-            state: targetTemperature
-          }
-        })
-
-        this.emitEntity({
-          type: 'select',
-          name: 'Modus',
-          key: 'mode',
-          options: MODE_OPTIONS,
-          commands: ['command'],
-          states: {
-            state: MODE_OPTIONS[mode]
-          }
-        })
-        
-        this.emitEntity({
-          type: 'select',
-          name: 'Leistung',
-          key: 'level',
-          options: LEVEL_OPTIONS,
-          commands: ['command'],
-          states: {
-            state: LEVEL_OPTIONS[level]
-          }
-        })
-        
-        this.emitEntity({
-          type: 'number',
-          name: 'Leistung',
-          key: 'power',
-          min: 1,
-          max: 10,
-          commands: ['command'],
-          states: {
-            state: level + 1
-          }
-        })
-      }
-
-      if (id === 'status') {
-        const statusCode = values.slice(0, 1)[0] + '.' + values.slice(1, 2)[0]
-        const boardTemp = values.slice(3, 4)[0]
-        const externalTemp = values.slice(4, 5)[0]
-        const control = ['0.1', '4.0'].includes(statusCode) ? 'off' : (statusCode === '3.35' ? 'fan_only' : 'heat')
-        const status = STATUS_OPTIONS[statusCode] || 'unbekannt'
-
-        this.emitEntity({
-          name: 'Temperatur Innenraum',
-          key: 'temperature_intake',
-          class: 'temperature',
-          unit: '°C',
-          states: {
-            state: boardTemp > 127 ? boardTemp - 255 : boardTemp
-          }
-        })
-
-        this.emitEntity({
-          name: 'Statuscode',
-          key: 'status_code',
-          states: {
-            state: statusCode
-          }
-        })
-        
-        this.emitEntity({
-          name: 'Status',
-          key: 'status',
-          states: {
-            state: status
-          }
-        })
-
-        this.emitEntity({
-          name: 'Temperatur extern',
-          key: 'temperature_sensor',
-          class: 'temperature',
-          unit: '°C',
-          states: {
-            state: externalTemp > 127 ? externalTemp - 255 : externalTemp
-          }
-        })
-
-        this.emitEntity({
-          name: 'Spannung',
-          key: 'voltage',
-          class: 'voltage',
-          unit: 'V',
-          states: {
-            state: values.slice(6, 7)[0] / 10
-          }
-        })
-        
-        this.emitEntity({
-          name: 'Temperatur Wärmetauscher',
-          key: 'temperature_heat_exchanger',
-          class: 'temperature',
-          unit: '°C',
-          states: {
-            state: values.slice(8, 9)[0] - 15
-          }
-        })
-
-        this.emitEntity({
-          name: 'Lüfterdrehzahl Vorgabe',
-          key: 'fan_rpm_specified',
-          unit: 'RPM',
-          states: {
-            state: values.slice(11, 12)[0] * 60
-          }
-        })
-
-        this.emitEntity({
-          name: 'Lüfterdrehzahl Aktuell',
-          key: 'fan_rpm_actual',
-          unit: 'RPM',
-          states: {
-            state: values.slice(12, 13)[0] * 60
-          }
-        })
-
-        this.emitEntity({
-          name: 'Frequenz Kraftstoffpumpe',
-          key: 'frequency_fuel_pump',
-          class: 'frequency',
-          unit: 'Hz',
-          states: {
-            state: values.slice(14, 15)[0] / 100
-          }
-        })
-
-        this.emitEntity({
-          type: 'select',
-          name: 'Steuerung',
-          key: 'control',
-          options: CONTROL_OPTIONS,
-          commands: ['command'],
-          states: {
-            state: CONTROL_OPTIONS[control]
-          }
-        })
+      switch (id) {
+        case 'version': return this.processVersionMessage(payload)
+        case 'status': return this.processStatusMessage(payload)
+        case 'settings': return this.processSettingsMessage(payload)
+        case 'temperature': return this.processTemperatureMessage(payload)
       }
     }
+  }
+
+  processVersionMessage (buffer) {
+    this.version = buffer.slice(0, 4).map(v => parseInt(v)).join('.')
+ 
+    this.emitEntity({
+      name: 'Blackbox-Version',
+      key: 'blackbox_version',
+      states: {
+        state: parseInt(buffer[4])
+      }
+    })
+  }
+
+  processStatusMessage (buffer) {
+    let data = {}
+
+    try {
+      data.statusCode = buffer.readUInt8(0) + '.' + buffer.readUInt8(1)
+      data.boardTemp = buffer.readUInt8(3)
+      data.externalTemp = buffer.readUInt8(4)
+      data.control = ['0.1', '4.0'].includes(data.statusCode) ? 'off' : (data.statusCode === '3.35' ? 'fan_only' : 'heat')
+      data.status = STATUS_OPTIONS[data.statusCode] || 'unbekannt'
+      data.voltage = buffer.readUInt8(6) / 10
+      data.temperatureHeatExchanger = buffer.readUInt8(8) - 15
+      data.fanRpmSpecified = buffer.readUInt8(11) * 60
+      data.fanRpmActual = buffer.readUInt8(12) * 60
+      data.frequencyFuelPump = buffer.readUInt8(14) / 100
+    } catch (e) {
+      this.error(ERROR_PROCESS_STATUS_MESSAGE + e)
+    }
+
+    this.emitEntity({
+      name: 'Temperatur Innenraum',
+      key: 'temperature_intake',
+      class: 'temperature',
+      unit: '°C',
+      states: {
+        state: data.boardTemp > 127 ? data.boardTemp - 255 : data.boardTemp
+      }
+    })
+
+    this.emitEntity({
+      name: 'Statuscode',
+      key: 'status_code',
+      states: {
+        state: data.statusCode
+      }
+    })
+    
+    this.emitEntity({
+      name: 'Status',
+      key: 'status',
+      states: {
+        state: data.status
+      }
+    })
+
+    this.emitEntity({
+      name: 'Temperatur extern',
+      key: 'temperature_sensor',
+      class: 'temperature',
+      unit: '°C',
+      states: {
+        state: data.externalTemp > 127 ? data.externalTemp - 255 : data.externalTemp
+      }
+    })
+
+    this.emitEntity({
+      name: 'Spannung',
+      key: 'voltage',
+      class: 'voltage',
+      unit: 'V',
+      states: {
+        state: data.voltage
+      }
+    })
+    
+    this.emitEntity({
+      name: 'Temperatur Wärmetauscher',
+      key: 'temperature_heat_exchanger',
+      class: 'temperature',
+      unit: '°C',
+      states: {
+        state: data.temperatureHeatExchanger
+      }
+    })
+
+    this.emitEntity({
+      name: 'Lüfterdrehzahl Vorgabe',
+      key: 'fan_rpm_specified',
+      unit: 'RPM',
+      states: {
+        state: data.fanRpmSpecified
+      }
+    })
+
+    this.emitEntity({
+      name: 'Lüfterdrehzahl Aktuell',
+      key: 'fan_rpm_actual',
+      unit: 'RPM',
+      states: {
+        state: data.fanRpmActual
+      }
+    })
+
+    this.emitEntity({
+      name: 'Frequenz Kraftstoffpumpe',
+      key: 'frequency_fuel_pump',
+      class: 'frequency',
+      unit: 'Hz',
+      states: {
+        state: data.frequencyFuelPump
+      }
+    })
+
+    this.emitEntity({
+      type: 'select',
+      name: 'Steuerung',
+      key: 'control',
+      options: CONTROL_OPTIONS,
+      commands: ['command'],
+      states: {
+        state: CONTROL_OPTIONS[data.control]
+      }
+    })
+  }
+
+  processSettingsMessage (buffer) {
+    let data = {}
+
+    this.settings = buffer
+
+    try {
+      data.workTime = buffer.readUInt16BE(0) / 60
+      data.sensor = buffer.readUInt8(2)
+      data.targetTemperature = buffer.readUInt8(3)
+      data.mode = buffer.readUInt8(4)
+      data.level = buffer.readUInt8(5)
+    } catch (e) {
+      this.error(ERROR_PROCESS_SETTINGS_MESSAGE + e)
+    }
+
+    this.emitEntity({
+      type: 'number',
+      name: 'Laufzeit',
+      key: 'work_time',
+      min: 0,
+      max: 12,
+      step: 0.5,
+      commands: ['command'],
+      states: {
+        state: data.workTime
+      }
+    })
+
+    this.emitEntity({
+      type: 'select',
+      name: 'Sensor',
+      key: 'sensor',
+      options: SENSOR_OPTIONS,
+      commands: ['command'],
+      states: {
+        state: SENSOR_OPTIONS[data.sensor]
+      }
+    })
+
+    this.emitEntity({
+      type: 'number',
+      name: 'Temperatur Sollwert',
+      key: 'temperature_target',
+      min: TEMP_MIN,
+      max: TEMP_MAX,
+      commands: ['command'],
+      states: {
+        state: data.targetTemperature
+      }
+    })
+
+    this.emitEntity({
+      type: 'select',
+      name: 'Modus',
+      key: 'mode',
+      options: MODE_OPTIONS,
+      commands: ['command'],
+      states: {
+        state: MODE_OPTIONS[data.mode]
+      }
+    })
+    
+    this.emitEntity({
+      type: 'select',
+      name: 'Leistung',
+      key: 'level',
+      options: LEVEL_OPTIONS,
+      commands: ['command'],
+      states: {
+        state: LEVEL_OPTIONS[data.level]
+      }
+    })
+    
+    this.emitEntity({
+      type: 'number',
+      name: 'Leistung',
+      key: 'power',
+      min: 1,
+      max: 10,
+      commands: ['command'],
+      states: {
+        state: data.level + 1
+      }
+    })
+  }
+
+  processTemperatureMessage (buffer) {
+    let data = {}
+
+    try {
+      data.value = buffer.readUInt8(0)
+    } catch (e) {
+      this.error(ERROR_PROCESS_TEMPERATURE_MESSAGE + e)
+    }
+
+    this.emitEntity({
+      name: 'Temperatur Bedienpanel',
+      key: 'temperature_panel',
+      class: 'temperature',
+      unit: '°C',
+      states: {
+        state: data.value
+      }
+    })
   }
 }
