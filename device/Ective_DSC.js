@@ -1,6 +1,6 @@
-import { SerialPort } from 'serialport'
-import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 import Device from './base.js'
+
+const ERROR_PROCESS_MESSAGE = 'Cannot process info message: '
 
 export default class extends Device {
   constructor (config) {
@@ -9,9 +9,7 @@ export default class extends Device {
     this.manufacturer = 'Ective'
     this.model = 'DSC'
     this.version = '1'
-    this.buffer = []
-    this.timeout = null
-    this.port = null
+    this.sendSerial = null
   }
 
   async connect () {
@@ -21,62 +19,26 @@ export default class extends Device {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort({
-      path: connection.port,
-      baudRate: 9600,
-      autoOpen: false
+    this.sendSerial = this.createSerialConnection({ path: connection.port, baudRate: 9600 })
+
+    this.poll(1000, async () => {
+      this.processMessage(await this.sendSerial(Buffer.from([255, 226, 2, 228])))
     })
-
-    const parser = this.port.pipe(new InterByteTimeoutParser({ interval: 50 }))
-    
-    parser.on('data', data => this.processMessage(data))
-
-    this.port.open(error => {
-      if (error) {
-        this.error(error.message)
-        this.info('Retrying in 10s')
-        
-        setTimeout(() => this.connect(), 10000)
-      } else {
-        this.info('Serial connection successful')
-      }
-    })
-    this.port.on('error', error => this.error(error.message))
-    this.port.on('close', () => {
-      this.warning('Lost connection!')
-      this.connect()
-    })
-
-    this.poll(10000, () => this.port.write(Buffer.from([255, 226, 2, 228])))
-  }
-
-  disconnect () {
-    this.port.close()
-  }
-
-  decodeBytes (buffer) {
-    const values = []
-
-    for (let i = 0; i < buffer.length; i += 2) {
-      values.push((buffer[i] << 8) | buffer[i + 1])
-    }
-
-    return values
   }
 
   processMessage (buffer) {
-    const values = this.decodeBytes(buffer)
+    let data = {}
 
-    if (values[0] !== 65506) {
-      return
+    try {
+      data.boardBatteryVoltage = buffer.readUInt16BE(4) / 100
+      data.panelVoltage = buffer.readUInt16BE(12) / 10
+      data.panelPower = buffer.readUInt16BE(10)
+      data.chargingCurrent = buffer.readUInt16BE(2) / 10
+      data.chargedEnergy = buffer.readUInt16BE(26) / 1000
+      data.chargingPower = Math.round(data.boardBatteryVoltage * data.chargingCurrent)
+    } catch (e) {
+      this.error(ERROR_PROCESS_MESSAGE + e)
     }
-
-    const boardBatteryVoltage = values[2] / 100
-    const panelVoltage = values[6] / 10
-    const panelPower = values[5]
-    const chargingCurrent = values[1] / 10
-    const chargedEnergy = values[13] / 1000
-    const chargingPower = Math.round(boardBatteryVoltage * chargingCurrent)
 
     this.emitEntity({
       name: 'Spannung Bordbatterie',
@@ -84,7 +46,7 @@ export default class extends Device {
       class: 'voltage',
       unit: 'V',
       states: {
-        state: boardBatteryVoltage
+        state: data.boardBatteryVoltage
       }
     })
 
@@ -94,7 +56,7 @@ export default class extends Device {
       class: 'voltage',
       unit: 'V',
       states: {
-        state: panelVoltage
+        state: data.panelVoltage
       }
     })
 
@@ -104,7 +66,7 @@ export default class extends Device {
       class: 'power',
       unit: 'W',
       states: {
-        state: panelPower
+        state: data.panelPower
       }
     })
 
@@ -114,7 +76,7 @@ export default class extends Device {
       class: 'power',
       unit: 'W',
       states: {
-        state: chargingPower
+        state: data.chargingPower
       }
     })
 
@@ -124,7 +86,7 @@ export default class extends Device {
       class: 'current',
       unit: 'A',
       states: {
-        state: chargingCurrent
+        state: data.chargingCurrent
       }
     })
 
@@ -134,7 +96,7 @@ export default class extends Device {
       class: 'energy',
       unit: 'kWh',
       states: {
-        state: chargedEnergy
+        state: data.chargedEnergy
       }
     })
   }
