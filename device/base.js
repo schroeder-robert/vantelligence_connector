@@ -103,14 +103,12 @@ export default class {
     return String(value).toLowerCase().replace(/[ ]/g, '_')
   }
 
-  createSerialConnection (options) {
+  createSerialConnection (options, parser, callback) {
     let port = null
-    let parser = null
+    let pipe = null
 
     const connect = () => {
       port = new SerialPort(Object.assign({ autoOpen: false }, options))
-      parser = port.pipe(new InterByteTimeoutParser({ interval: 100 }))
-
       port.open(error => {
         if (error) {
           this.error(error.message)
@@ -126,7 +124,13 @@ export default class {
         this.warning('Lost connection!')
         
         connect()
-      })  
+      })
+
+      pipe = port.pipe(parser || new InterByteTimeoutParser({ interval: 100 }))
+      
+      if (typeof callback === 'function') {
+        pipe.on('data', callback)
+      }
     }
 
     connect()
@@ -137,7 +141,7 @@ export default class {
         try {
           let timeout = setTimeout(() => reject('request timeout'), 3000)
 
-          parser.once('data', data => {
+          pipe.once('data', data => {
             clearTimeout(timeout)
             resolve(data)
           })
