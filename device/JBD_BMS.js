@@ -41,11 +41,7 @@ export default class extends Device {
       return 'Connection type not supported!'
     }
 
-    this.sendSerial = this.createSerialConnection({
-      path: connection.port,
-      baudRate: 9600
-    })
-    
+    this.sendSerial = this.createSerialConnection({ path: connection.port, baudRate: 9600 })
     
     this.poll(1000, async () => {
       this.processMessage(await this.read('name'))
