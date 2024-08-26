@@ -1,6 +1,6 @@
-import { SerialPort } from 'serialport'
-import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 import Device from './base.js'
+
+const ERROR_PROCESS_MESSAGE = 'Cannot process info message: '
 
 export default class extends Device {
   constructor (config) {
@@ -9,9 +9,6 @@ export default class extends Device {
     this.manufacturer = 'Votronic'
     this.model = 'VCC 1212-30'
     this.version = '1'
-    this.buffer = []
-    this.timeout = null
-    this.port = null
   }
 
   async connect () {
@@ -21,76 +18,54 @@ export default class extends Device {
       return 'Connection type not supported!'
     }
 
-    this.port = new SerialPort({
-      path: connection.port,
-      baudRate: 1000,
-      autoOpen: false
-    })
-
-    const parser = this.port.pipe(new InterByteTimeoutParser({ interval: 100 }))
-
-    parser.on('data', data => this.processMessage(data))
-
-    this.port.open(error => {
-      if (error) {
-        this.error(error.message)
-        this.info('Retrying in 10s')
-        
-        setTimeout(() => this.connect(), 10000)
-      } else {
-        this.info('Serial connection successful')
-      }
-    })
-    this.port.on('error', error => this.error(error.message))
-    this.port.on('close', () => {
-      this.warning('Lost connection!')
-      this.connect()
-    })
-  }
-
-  disconnect () {
-    this.port.close()
+    this.createSerialConnection({ path: connection.port, baudRate: 1000 }, null, buffer => this.processMessage(buffer))
   }
 
   processMessage (buffer) {
     if (buffer.length < 8) return
 
-    const voltageBoard = buffer.readInt16LE(2) / 100
-    const voltageStart = buffer.readInt16LE(4) / 100
-    const currentBoard = buffer.readInt16LE(6) / 10
+    let data = {}
+
+    try {
+      data.voltageBoard = buffer.readInt16LE(2) / 100
+      data.voltageStart = buffer.readInt16LE(4) / 100
+      data.currentBoard = buffer.readInt16LE(6) / 10
+    } catch (e) {
+      this.error(ERROR_PROCESS_MESSAGE + e)
+    }
     
-    if (voltageStart > 10 && voltageStart < 20) {
+    if (data.voltageStart > 10 && data.voltageStart < 20) {
       this.emitEntity({
         name: 'Spannung Starterbatterie',
         key: 'voltage_start_battery',
         class: 'voltage',
         unit: 'V',
         states: {
-          state: voltageStart
+          state: data.voltageStart
         }
       })
     }
     
-    if (voltageBoard > 10 && voltageBoard < 20) {
+    if (data.voltageBoard > 10 && data.voltageBoard < 20) {
       this.emitEntity({
         name: 'Spannung Bordbatterie',
         key: 'voltage_board_battery',
         class: 'voltage',
         unit: 'V',
         states: {
-          state: voltageBoard
+          state: data.voltageBoard
         }
       })
     }
     
-    if (currentBoard < 50) {
+    if (data.currentBoard < 50) {
       this.emitEntity({
         name: 'Ladestrom Bordbatterie',
         key: 'current_board_battery',
         class: 'current',
         unit: 'A',
         states: {
-          state: currentBoard
+          state: data.currentBoard
         }
       })
     }
