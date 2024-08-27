@@ -27,6 +27,10 @@ export default class extends Device {
     let data = {}
 
     try {
+      if (buffer.length < 8) {
+        throw new Error('Buffer too short')
+      }
+
       data.voltageBoard = buffer.readInt16LE(2) / 100
       data.voltageStart = buffer.readInt16LE(4) / 100
       data.currentBoard = buffer.readInt16LE(6) / 10

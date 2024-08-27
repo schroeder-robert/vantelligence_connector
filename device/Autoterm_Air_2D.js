@@ -265,20 +265,24 @@ export default class extends Device {
   }
 
   processMessage (buffer) {
-    const type = MESSAGE_TYPES[buffer[1]] || buffer[1]
+    if (buffer.length < 5) {
+      throw new Error('Buffer too short')
+    }
+
+    const type = MESSAGE_TYPES[buffer.readUInt8(1)] || buffer.readUInt8(1)
     const length = buffer[2]
     const payload = buffer.slice(5, -2)
     const checksum = buffer.slice(-2)
     let id
 
     if (type === 'request' || type === 'response') {
-      id = MESSAGE_IDS[buffer[4]]
+      id = MESSAGE_IDS[buffer.readUInt8(4)]
     } else if (type === 'diag') {
-      id = DIAG_MESSAGE_IDS[buffer[4]]
+      id = DIAG_MESSAGE_IDS[buffer.readUInt8(4)]
     }
     
     if (!id) {
-      id = buffer[4]
+      id = buffer.readUInt8(4)
     }
 
     if (type === 'response') {
@@ -307,6 +311,10 @@ export default class extends Device {
     let data = {}
 
     try {
+      if (buffer.length < 15) {
+        throw new Error('Buffer too short')
+      }
+
       data.statusCode = buffer.readUInt8(0) + '.' + buffer.readUInt8(1)
       data.boardTemp = buffer.readUInt8(3)
       data.externalTemp = buffer.readUInt8(4)
@@ -423,6 +431,10 @@ export default class extends Device {
     this.settings = buffer
 
     try {
+      if (buffer.length < 6) {
+        throw new Error('Buffer too short')
+      }
+
       data.workTime = buffer.readUInt16BE(0) / 60
       data.sensor = buffer.readUInt8(2)
       data.targetTemperature = buffer.readUInt8(3)
@@ -507,6 +519,10 @@ export default class extends Device {
     let data = {}
 
     try {
+      if (buffer.length < 1) {
+        throw new Error()
+      }
+
       data.value = buffer.readUInt8(0)
     } catch (e) {
       this.error(ERROR_PROCESS_TEMPERATURE_MESSAGE + e)

@@ -34,6 +34,10 @@ export default class extends Device {
   }
 
   processMessage (buffer) {
+    if (buffer.length < 1) {
+      throw new Error('Buffer too short')
+    }
+
     const index = Object.values(REGISTERS).indexOf(buffer.readUInt8(0))
 
     if (index < 0) {

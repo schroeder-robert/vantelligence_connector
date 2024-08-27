@@ -80,6 +80,10 @@ export default class extends Device {
   }
 
   processMessage (buffer) {
+    if (buffer.length < 4) {
+      throw new Error('Buffer too short')
+    }
+
     const index = Object.values(REGISTERS).indexOf(buffer.readUInt8(1))
 
     if (index < 0) {
@@ -133,22 +137,24 @@ export default class extends Device {
     let data = {}
 
     try {
-      data = {
-        packVoltage: values.readUInt16BE(0),
-        packCurrent: values.readUInt16BE(2),
-        cycleCapacity: values.readUInt16BE(4),
-        designCapacity: values.readUInt16BE(6),
-        cycleCount: values.readUInt16BE(8),
-        manufactureDate: values.readUInt16BE(10),
-        balance0: values.readUInt16BE(12),
-        balance1: values.readUInt16BE(14),
-        errors: values.readUInt16BE(16),
-        softwareVersion: values.readUInt8(18),
-        stateOfCharge: values.readUInt8(19),
-        fetStatus: values.readUInt8(20),
-        packCells: values.readUInt8(21),
-        ntcCount: values.readUInt8(22)
+      if (buffer.length < 23) {
+        throw new Error('Buffer too short')
       }
+
+      data.packVoltage = values.readUInt16BE(0)
+      data.packCurrent = values.readUInt16BE(2)
+      data.cycleCapacity = values.readUInt16BE(4)
+      data.designCapacity = values.readUInt16BE(6)
+      data.cycleCount = values.readUInt16BE(8)
+      data.manufactureDate = values.readUInt16BE(10)
+      data.balance0 = values.readUInt16BE(12)
+      data.balance1 = values.readUInt16BE(14)
+      data.errors = values.readUInt16BE(16)
+      data.softwareVersion = values.readUInt8(18)
+      data.stateOfCharge = values.readUInt8(19)
+      data.fetStatus = values.readUInt8(20)
+      data.packCells = values.readUInt8(21)
+      data.ntcCount = values.readUInt8(22)
     } catch (e) {
       this.error(ERROR_PROCESS_INFO_MESSAGE + e)
     }
