@@ -80,19 +80,19 @@ export default class extends Device {
   }
 
   processMessage (buffer) {
-    const index = Object.values(REGISTERS).indexOf(buffer[1])
+    const index = Object.values(REGISTERS).indexOf(buffer.readUInt8(1))
 
     if (index < 0) {
-      this.error(ERROR_REGISTER_UNKNOWN + buffer[1].toString(16))
+      this.error(ERROR_REGISTER_UNKNOWN + buffer.readUInt8(1).toString(16))
     }
 
     const register = Object.keys(REGISTERS)[index]
 
-    if (buffer[2]) {
+    if (buffer.readUInt8(2)) {
       this.error(ERROR_REGISTER_RESPONSE + register)
     }
 
-    const data = buffer.slice(4, 4 + buffer[3])
+    const data = buffer.slice(4, 4 + buffer.readUInt8(3))
 
     switch (register) {
       case 'info': return this.proccessInfoMessage(data)
