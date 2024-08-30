@@ -262,6 +262,10 @@ function publish (client, device, entity, support) {
     PUBLISH_TOPICS.push(topic)
   }
 
+  if (typeof entity.availability === 'string') {
+    client.publish(getEntityTopic(device, entity) + '/availability', entity.availability, { retain: true })
+  }
+
   if (entity.states instanceof Object) {
     Object.entries(entity.states).forEach(([key, state]) => {
       client.publish(getEntityTopic(device, entity) + '/' + key, String(state), { retain: true })
@@ -304,6 +308,7 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
     name: entity.name,
     unique_id: id,
     device_class: entity.class,
+    icon: entity.icon,
     device: {
       name: device.name,
       model: device.model,
@@ -311,6 +316,10 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
       sw_version: device.version,
       identifiers: [ device.id ]
     }
+  }
+
+  if (typeof entity.availability === 'string') {
+    config['availability_topic'] = getEntityTopic(device, entity) + '/availability'
   }
 
   if (entity.states instanceof Object) {
@@ -363,7 +372,6 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   if (type === 'tracker') {
     type = 'device_tracker'
 
-    config.icon = entity.icon
     config.payload_home = 'home',
     config.payload_not_home = 'not_home'
   }
