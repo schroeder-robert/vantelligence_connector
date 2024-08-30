@@ -1,12 +1,5 @@
-import { type } from 'node:os'
 import Device from './base.js'
 import { spawn, spawnSync } from 'node:child_process'
-
-const spawnSyncDebug = (a, b) => {
-  console.log(a, b)
-
-  return spawnSync(a, b)
-}
 
 const ICONS = {
   computer: 'mdi:laptop',
@@ -17,38 +10,35 @@ export default class extends Device {
   constructor (config) {
     super(config)
     
-    this.manufacturer = 'Deine Mudda'
-    this.model = 'Bluetooth'
+    this.manufacturer = 'Bluetooth'
+    this.model = 'Player'
     this.version = '1'
     this.devices = []
-    this.current = null
+    this.device = null
+    this.player = null
     this.selected = null
+    this.status = ''
   }
 
   async connect () {
     this.poll(5000, () => {
       this.getAudioDevices()
-      this.getConnectedDevice()
+      this.getPlayer()
     })
 
-    this.emitEntity({
-      name: 'Status',
-      key: 'status',
-      states: { state: '-' }
-    })
-
+    this.setStatus('start')
     this.emitButtons()
   }
 
   emitButtons () {
-    const availability = this.current === null ? 'offline' : 'online'
+    const availability = this.device === null ? 'offline' : 'online'
 
     this.emitEntity({
       type: 'button',
       name: 'Connect',
       key: 'connect',
       icon: 'mdi:bluetooth-connect',
-      availability: this.selected === null || this.selected?.address === this.current?.address ? 'offline' : 'online',
+      availability: this.selected === null ? 'offline' : 'online',
       commands: ['command'],
       states: { state: '' }
     })
@@ -112,10 +102,30 @@ export default class extends Device {
       commands: ['command'],
       states: { state: '' }
     })
+
+    this.emitEntity({
+      type: 'button',
+      name: 'Media fast forward',
+      key: 'media_fast_forward',
+      icon: 'mdi:fast-forward',
+      availability,
+      commands: ['command'],
+      states: { state: '' }
+    })
+
+    this.emitEntity({
+      type: 'button',
+      name: 'Media rewind',
+      key: 'media_rewind',
+      icon: 'mdi:rewind',
+      availability,
+      commands: ['command'],
+      states: { state: '' }
+    })
   }
 
   emitDevices () {
-    const options = {}
+    const options = { '-': '-' }
 
     this.devices.forEach(d => options[d.address] = d.name)
     this.emitEntity({
@@ -128,47 +138,93 @@ export default class extends Device {
     })
   }
 
-  getConnectedDevice () {
-    const output = spawnSyncDebug('bash', ['-c', 'bluetoothctl info']).stdout
+  getPlayer () {
+    let connected = false
     
-    if (output.toString().startsWith('Device ')) {
-      this.current = this.parseDeviceInfo(output)
-    } else {
-      this.current = null
+    if (this.request('player.list').length) {
+      const output = this.request('info')
+
+      if (output[0].startsWith('Device ')) {
+        this.device = this.parseDeviceInfo(output)
+        this.player = this.parsePlayerInfo(this.request('player.show'))
+        this.setStatus('connected')
+
+        connected = true
+      }
+    }
+    
+    if (!connected) {
+      this.device = null
+      this.player = null
+      this.setStatus('disconnected')
     }
 
-    console.log('CURRENT', this.current?.name)
+    // console.log('CURRENT', this.device?.name)
 
     this.emitEntity({
       name: 'Device name',
       key: 'device_name',
-      states: { state: this.current?.name || '-' }
+      states: { state: this.device?.name || '-' }
     })
 
     this.emitEntity({
       name: 'Device type',
       key: 'device_type',
-      icon: ICONS[this.current?.icon] || 'mdi:close',
-      states: { state: this.current?.icon || '-' }
+      icon: ICONS[this.device?.icon] || 'mdi:close',
+      states: { state: this.device?.icon || '-' }
     })
 
     this.emitEntity({
       name: 'Device address',
       key: 'device_address',
-      states: { state: this.current?.address || '-' }
+      states: { state: this.device?.address || '-' }
     })
 
     this.emitEntity({
       name: 'Device class',
       key: 'device_class',
-      states: { state: this.current?.class || '-' }
+      states: { state: this.device?.class || '-' }
     })
 
     this.emitEntity({
       name: 'Device trusted',
       key: 'device_trusted',
       type: 'binary_sensor',
-      states: { state: this.current?.trusted ? 'ON' : 'OFF' }
+      states: { state: this.device?.trusted ? 'ON' : 'OFF' }
+    })
+    
+    // console.log(this.player)
+
+    this.emitEntity({
+      name: 'Player artist',
+      key: 'player_artist',
+      states: { state: this.player?.artist || '-' }
+    })
+
+    this.emitEntity({
+      name: 'Player title',
+      key: 'player_title',
+      states: { state: this.player?.title || '-' }
+    })
+
+    this.emitEntity({
+      name: 'Player album',
+      key: 'player_album',
+      states: { state: this.player?.album || '-' }
+    })
+
+    this.emitEntity({
+      name: 'Player shuffle',
+      key: 'player_shuffle',
+      type: 'binary_sensor',
+      states: { state: this.device?.shuffle === 'on' ? 'ON' : 'OFF' }
+    })
+
+    this.emitEntity({
+      name: 'Player repeat',
+      key: 'player_repeat',
+      type: 'binary_sensor',
+      states: { state: this.device?.repeat === 'on' ? 'ON' : 'OFF' }
     })
 
     this.emitDevices()
@@ -176,22 +232,33 @@ export default class extends Device {
   }
 
   getAudioDevices () {
-    this.devices = this.getPairedDevices().filter(d => 'Audio Source' in d.uuid)
+    this.devices = this.getAllDevices().filter(d => 'Audio Source' in d.uuid)
 
     this.emitDevices()
   }
 
-  getPairedDevices () {
-    return spawnSync('bash', ['-c', 'bluetoothctl paired-devices | cut -d " " -f 2']).stdout.toString().trim().split('\n').map(a => this.getDeviceDetails(a))
+  getAllDevices () {
+    return this.request('devices | cut -d " " -f 2').map(r => this.getDeviceDetails(r))
   }
 
   getDeviceDetails (address) {
-    return this.parseDeviceInfo(spawnSync('bluetoothctl' , ['info', address]).stdout)
+    return this.parseDeviceInfo(this.request('info', address))
   }
 
-  parseDeviceInfo (content) {
-    const rows = String(content).trim().split('\n\t')
-    const data = { address: rows[0].split(' ')[1] }
+  parsePlayerInfo (rows) {
+    const data = {}
+
+    rows.slice(1).forEach(r => {
+      const parts = r.split(' ')
+
+      data[parts[0][0].toLowerCase() + parts[0].slice(1).replace(/:$/, '')] = parts.slice(1).join(' ')
+    })
+
+    return data
+  }
+
+  parseDeviceInfo (rows) {
+    const data = { address: rows[0].split(' ', 2)[1] }
 
     rows.slice(1).forEach(r => {
       let [key, value] = r.split(': ')
@@ -214,6 +281,16 @@ export default class extends Device {
     return data
   }
 
+  setStatus (state) {
+    // console.log('STAT', state)
+    this.status = state
+    this.emitEntity({
+      name: 'Status',
+      key: 'status',
+      states: { state }
+    })
+  }
+
   setDevice (state) {
     this.selected = this.devices.find(d => d.address === state) || null
     console.log('SET', state, this.selected?.name)
@@ -221,47 +298,61 @@ export default class extends Device {
     this.emitDevices()
   }
 
-  setConnect () {
+  async setConnect () {
     if (!this.selected?.address) return
 
     this.setDisconnect()
+    this.setStatus('connecting')
 
-    spawnSyncDebug('bluetoothctl', ['connect', this.selected.address])
+    let output = ''
+
+    for (let i = 0; i < 3; ++i) {
+      output = this.request('connect', this.selected.address)
+      
+      // console.log(output.toString())
+
+      if (output.some(r => r.startsWith('[NEW]'))) {
+        break
+      }
+
+      await this.wait(1000)
+
+    }
     
-    this.getConnectedDevice()
+    this.getPlayer()
   }
 
   setDisconnect () {
-    if (!this.current?.address) return
+    if (!this.device?.address) return
     
-    spawnSyncDebug('bluetoothctl', ['disconnect', this.current.address])
-
-    this.getConnectedDevice()
+    this.setStatus('disconnecting')
+    this.request('disconnect', this.device.address)
+    this.getPlayer()
   }
 
   setMediaNext () {
-    this.dbusSend('org.bluez.MediaPlayer1.Next')
+    this.request('player.next')
   }
 
   setMediaPause () {
-    this.dbusSend('org.bluez.MediaPlayer1.Pause')
+    this.request('player.pause')
   }
 
   setMediaPlay () {
-    this.dbusSend('org.bluez.MediaPlayer1.Play')
+    this.request('player.play')
   }
 
   setMediaPrevious () {
-    this.dbusSend('org.bluez.MediaPlayer1.Previous')
+    this.request('player.previous')
   }
 
   setMediaStop () {
-    this.dbusSend('org.bluez.MediaPlayer1.Stop')
+    this.request('player.stop')
   }
-  
-  dbusSend (event) {
-    if (this.current?.address) {
-      spawnSyncDebug('dbus-send', ['--system', '--type=method_call',  '--dest=org.bluez', '/org/bluez/hci0/dev_' + this.current.address.replaceAll(':', '_') + '/player0', event])
-    }
+
+  request () {
+    const result = spawnSync('bash', ['-c', 'bluetoothctl ' + Object.values(arguments).join(' ')]).stdout.toString().trim()
+    
+    return result ? result.split(/\n\t?/) : []
   }
 }
