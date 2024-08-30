@@ -105,12 +105,12 @@ export default class extends Device {
     }
   }
 
-  processNameMessage (values) {
-    this.model = values.toString()
+  processNameMessage (buffer) {
+    this.model = buffer.toString()
   }
 
-  processVoltagesMessage (values) {
-    const count = values.length/2
+  processVoltagesMessage (buffer) {
+    const count = buffer.length/2
 
     this.emitEntity({
       name: 'Anzahl Zellen',
@@ -127,13 +127,13 @@ export default class extends Device {
         class: 'voltage',
         unit: 'V',
         states: {
-          state: values.readUInt16BE(i * 2) / 1000
+          state: buffer.readUInt16BE(i * 2) / 1000
         }
       })
     }
   }
 
-  proccessInfoMessage (values) {
+  proccessInfoMessage (buffer) {
     let data = {}
 
     try {
@@ -141,20 +141,20 @@ export default class extends Device {
         throw new Error('Buffer too short')
       }
 
-      data.packVoltage = values.readUInt16BE(0)
-      data.packCurrent = values.readUInt16BE(2)
-      data.cycleCapacity = values.readUInt16BE(4)
-      data.designCapacity = values.readUInt16BE(6)
-      data.cycleCount = values.readUInt16BE(8)
-      data.manufactureDate = values.readUInt16BE(10)
-      data.balance0 = values.readUInt16BE(12)
-      data.balance1 = values.readUInt16BE(14)
-      data.errors = values.readUInt16BE(16)
-      data.softwareVersion = values.readUInt8(18)
-      data.stateOfCharge = values.readUInt8(19)
-      data.fetStatus = values.readUInt8(20)
-      data.packCells = values.readUInt8(21)
-      data.ntcCount = values.readUInt8(22)
+      data.packVoltage = buffer.readUInt16BE(0)
+      data.packCurrent = buffer.readUInt16BE(2)
+      data.cycleCapacity = buffer.readUInt16BE(4)
+      data.designCapacity = buffer.readUInt16BE(6)
+      data.cycleCount = buffer.readUInt16BE(8)
+      data.manufactureDate = buffer.readUInt16BE(10)
+      data.balance0 = buffer.readUInt16BE(12)
+      data.balance1 = buffer.readUInt16BE(14)
+      data.errors = buffer.readUInt16BE(16)
+      data.softwareVersion = buffer.readUInt8(18)
+      data.stateOfCharge = buffer.readUInt8(19)
+      data.fetStatus = buffer.readUInt8(20)
+      data.packCells = buffer.readUInt8(21)
+      data.ntcCount = buffer.readUInt8(22)
     } catch (e) {
       this.error(ERROR_PROCESS_INFO_MESSAGE + e)
     }
@@ -167,7 +167,7 @@ export default class extends Device {
 
     for (let i = 0; i < data.ntcCount; ++i) {
       try {
-        const temp = values.readUInt16BE(23 + (i * 2))
+        const temp = buffer.readUInt16BE(23 + (i * 2))
         
         this.emitEntity({
           name: 'Zelle ' + (i + 1) + ' Temperatur',
