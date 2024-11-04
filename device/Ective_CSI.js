@@ -93,7 +93,6 @@ export default class extends Device {
             if (value > 90000) {
               if (data.length) {
                 this.processMessage(data)
-                // console.log(data)
               }
 
               data = []
@@ -115,7 +114,7 @@ export default class extends Device {
   }
 
   setMode (state) {
-    MODE_PIN.write(state)
+    MODE_PIN.write(parseInt(state))
   }
 
   processMessage (data) {
@@ -134,8 +133,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Bit #2',
-      key: 'bit_2',
+      name: 'Bypass',
+      key: 'bypass',
       states: {
         state: data[1] ? 'ON' : 'OFF'
       }
@@ -152,8 +151,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Bit #4',
-      key: 'bit_4',
+      name: 'AC Charge',
+      key: 'ac_charge',
       states: {
         state: data[3] ? 'ON' : 'OFF'
       }
@@ -161,8 +160,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Landstrom',
-      key: 'landstrom',
+      name: 'AC In',
+      key: 'ac_in',
       states: {
         state: data[4] ? 'ON' : 'OFF'
       }
@@ -170,8 +169,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Error 1',
-      key: 'error_1',
+      name: 'Fault',
+      key: 'fault',
       states: {
         state: data[5] ? 'ON' : 'OFF'
       }
@@ -179,8 +178,8 @@ export default class extends Device {
 
     this.emitEntity({
       type: 'binary_sensor',
-      name: 'Bit #7',
-      key: 'bit_7',
+      name: 'Solar Charge',
+      key: 'solar_charge',
       states: {
         state: data[6] ? 'ON' : 'OFF'
       }
