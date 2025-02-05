@@ -13,9 +13,11 @@ jobs:
           repository: schroeder-robert/ha-addons
           ref: main
           submodules: true
+      - run: git config --global user.name "Robert Schröder"
+      - run: git config --global user.email "mail@schroeder-robert.de"
       - run: git submodule update --recursive --remote
       - run: git add -A
-      - run: git commit -m "updated submodules" --author="Robert Schröder <mail@schroeder-robert.de>"
+      - run: git commit -m "updated submodules"
       - run: git push
           
 #      - name: GitHub Script
