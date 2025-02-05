@@ -15,7 +15,7 @@ jobs:
           submodules: true
       - run: git submodule update --recursive --remote
       - run: git add -A
-      - run: git commit -m 'updated submodules' --author 'Robert Schröder <mail@schroeder-robert.de>'
+      - run: git commit -m "updated submodules" --author="Robert Schröder <mail@schroeder-robert.de>"
       - run: git push
           
 #      - name: GitHub Script
