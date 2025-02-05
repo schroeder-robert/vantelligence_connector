@@ -13,6 +13,7 @@ jobs:
           repository: schroeder-robert/ha-addons
           ref: main
           submodules: true
+          token: ${{ secrets.PAT }}
       - run: git config --global user.name "Robert Schröder"
       - run: git config --global user.email "mail@schroeder-robert.de"
       - run: git submodule update --recursive --remote
@@ -20,24 +21,4 @@ jobs:
       - run: git commit -m "updated submodules"
       - run: git push
           
-#      - name: GitHub Script
-#        uses: actions/github-script@v7.0.1
-#        with:
-          # The script to run
-#          script: 
-          # The GitHub token used to create an authenticated client
-#          github-token: # optional, default is ${{ github.token }}
-          # Whether to tell the GitHub client to log details of its requests. true or false. Default is to run in debug mode when the GitHub Actions step debug logging is turned on.
-#          debug: # optional, default is ${{ runner.debug == '1' }}
-          # An optional user-agent string
-#          user-agent: # optional, default is actions/github-script
-          # A comma-separated list of GraphQL API previews to accept
-#          previews: # optional
-          # Either "string" or "json" (default "json")—how the result will be encoded
-#          result-encoding: # optional, default is json
-          # The number of times to retry a request
-#          retries: # optional, default is 0
-          # A comma separated list of status codes that will NOT be retried e.g. "400,500". No effect unless `retries` is set
-#          retry-exempt-status-codes: # optional, default is 400401403404422
-          # An optional GitHub REST API URL to connect to a different GitHub instance. For example, https://my.github-enterprise-server.com/api/v3
-#          base-url: # optional           
+     
