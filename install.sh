@@ -1,11 +1,19 @@
 #!/bin/bash
 
+if [ "$EUID" -ne 0 ]
+  then echo "Please run as root"
+  exit
+fi
+
+# Pi config
+echo "Configuring Pi"
+
 echo "dtoverlay=gpio-no-irq" >> "/boot/config.txt"
 
 # Git installation
 echo "Installing Git"
 
-apt-get install git
+apt-get install git > /dev/null
 
 # Node.js installation
 echo "Installing Node.js"
@@ -13,16 +21,18 @@ echo "Installing Node.js"
 curl -fsSL https://deb.nodesource.com/setup_18.x | -E bash - &&\
 apt-get install -y nodejs
 
-npm install -g node-gyp
+npm install --quiet -g node-gyp > /dev/null
 
 # Repo cloning
 echo "Cloning repo"
 
-git clone https://github.com/schroeder-robert/vantelligence_connector.git connector
+git clone https://github.com/schroeder-robert/vantelligence_connector.git connector-test &> /dev/null
 
-cd connector
+cd connector-test
 
-npm install
+echo "NPM Install"
+
+npm install > /dev/null
 
 # Docker installation
 # curl -fsSL https://get.docker.com -o get-docker.sh

@@ -1,0 +1,32 @@
+{
+  "name": "connector",
+  "version": "1.0.0",
+  "description": "",
+  "main": "app.js",
+  "type": "module",
+  "scripts": {
+    "debug": "nodemon app.js"
+  },
+  "dependencies": {
+    "ads1115": "^1.2.0",
+    "bme280-sensor": "^0.1.7",
+    "chalk": "^5.0.0",
+    "ds18b20-raspi": "^0.3.6",
+    "i2c-bus": "^5.2.2",
+    "i2c-io-expanders": "^1.0.1",
+    "i2c-mpu6050": "^2.3.0",
+    "kalmanjs": "^1.1.0",
+    "mqtt": "^4.3.7",
+    "nodemon": "^2.0.15",
+    "oled-font-5x7": "^1.0.3",
+    "oled-i2c-bus": "^1.0.12",
+    "pca9685": "^5.0.0",
+    "pigpio-client": "^1.5.2",
+    "pulseaudio.js": "^1.3.1",
+    "rpio": "^2.4.2",
+    "serialport": "^11.0.0",
+    "socketcan": "^3.0.0",
+    "ws": "^8.13.0",
+    "yaml": "^2.3.1"
+  }
+}

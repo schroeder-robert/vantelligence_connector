@@ -1,0 +1,212 @@
+support:
+- homeassistant
+devices:
+# - name: HS-Can
+#   id: hscan
+#   class: Socketcan
+#   connection:
+#     bus: can0
+
+- name: Befehle
+  id: command
+  class: Command
+- name: Bluetooth
+  id: bluetooth
+  class: Bluetooth
+- name: PWM-Controller
+  id: pwmcontroller
+  class: PCA9685
+  connection:
+    type: i2c
+    bus: 1
+  channels:
+  - name: Licht Schiebetür links
+    id: 0
+    type: light
+  - name: Licht Laderaum
+    id: 1
+    type: light
+  - name: Licht Schiebetür rechts
+    id: 2
+    type: light
+  - name: Licht Dachluke
+    id: 3
+    type: light
+  - name: Licht5
+    id: 4
+    type: light
+  - name: Schubladenverrieglung
+    id: 14
+    min: 400
+    max: 2600
+    scale: 180
+  - name: Kühlschrankverrieglung
+    id: 15
+    min: 400
+    max: 2600
+    scale: 180
+- name: Analogsensor
+  id: analogsensor
+  class: ADS1115
+  connection:
+    type: i2c
+    bus: 1
+  interval: 3000
+  values:
+  - name: A0
+    measure: 0+GND
+    min: 0
+    max: 65535
+    scale: 1
+    unit: l
+  - name: A1
+    measure: 1+GND
+    min: 0
+    max: 65535
+    scale: 1
+    unit: l
+  - name: Abwasser
+    measure: 2+GND
+    min: 1400
+    max: 14000
+    scale: 78
+    unit: l
+    filter: true
+  - name: Frischwasser
+    measure: 3+GND
+    min: 0
+    max: 14400
+    scale: 110
+    unit: l
+    filter: true
+- name: Luftsensor
+  id: luftsensor
+  class: BME280
+  connection:
+    type: i2c
+    bus: 1
+- name: Helligkeitssensor
+  id: helligkeitssensor
+  class: BH1750
+  connection:
+    type: i2c
+    bus: 1
+- name: Bewegungssensor
+  id: bewegungssensor
+  class: MPU_6050
+  connection:
+    type: i2c
+    bus: 1
+- name: B2B-Laderegler
+  id: b2b_laderegler
+  class: Votronic_VCC_1212
+  connection:
+    type: serial
+    port: "/dev/ttyUSBCharger"
+- name: Solar-Laderegler
+  id: solar_laderegler
+  class: Ective_DSC
+  connection:
+    type: serial
+    port: "/dev/ttyUSBSolar"
+- name: Wechselrichter
+  id: wechselrichter
+  class: Ective_CSI
+  connection:
+    type: pins
+    power_pin: 13
+    mode_pin: 19
+    data_pin: 26
+- name: Dieselheizung
+  id: dieselheizung
+  class: Autoterm_Air_2D
+  subscribe:
+    temperature_current: connector/device/luftsensor/temperature/state
+  connection:
+    type: serial
+    port: "/dev/ttyUSBHeater"
+- name: GPIO
+  id: gpio
+  class: GPIO
+  pins:
+  - name: Dashcam
+    type: out
+    id: 24
+    inverted: true
+  - name: Wasserpumpe
+    type: out
+    id: 31
+    inverted: true
+  - name: Kühlschrank
+    type: out
+    id: 36
+    inverted: true
+  - name: B2B Laderegler
+    type: out
+    id: 38
+    inverted: true
+  - name: Soundsystem
+    type: out
+    id: 22
+    inverted: true
+  - name: Relais 1
+    type: out
+    id: 26
+    inverted: true
+  - name: Abwasserventil zu
+    type: out
+    id: 16
+    inverted: true
+  - name: Abwasserventil auf
+    type: out
+    id: 28
+    inverted: true
+  - name: Wasserboiler
+    type: out
+    id: 8
+    inverted: true
+  - name: 'Kochstelle'
+    type: out
+    id: 10
+    inverted: true
+  - name: Schalter Dachluke
+    type: in
+    id: 7
+    pull: up
+    inverted: true
+  - name: Haupttaster
+    type: in
+    id: 40
+    pull: up
+    inverted: true
+- name: Soundsystem
+  id: sound
+  class: Pulseaudio
+  controls:
+  - name: Main
+    id: Master
+- name: Lichtsteuerung außen
+  id: lichtsteuerung_aussen
+  class: Arduino
+  connection:
+    type: i2c
+    bus: 1
+  lights:
+  - name: 'Arbeitslicht rechts'
+  - name: 'Fernlicht links'
+  - name: 'Arbeitslicht links'
+  - name: 'Fernlicht rechts'
+  - name: 'Rücklicht links'
+  - name: 'Blinker vorne links'
+  - name: 'Blinker vorne rechts'
+    brightness: true
+  - name: 'Positionslicht rechts'
+    brightness: true
+  - name: 'Blinker hinten links'
+    brightness: true
+  - name: 'Positionslicht links'
+    brightness: true
+  - name: 'Blinker hinten rechts'
+    brightness: true
+  - name: 'Rücklicht rechts'
+    brightness: true

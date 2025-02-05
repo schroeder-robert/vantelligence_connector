@@ -1,0 +1,21 @@
+# https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
+name: Vantelligence Connector
+version: 1.0.9
+slug: vantelligence_connector
+description: MQTT Connector for devices in your camper.
+url: "https://github.com/home-assistant/addons-example/tree/main/example"
+arch:
+  - armhf
+  - armv7
+  - aarch64
+  - amd64
+  - i386
+init: false
+map:
+  - share:rw
+full_access: true
+options:
+  devices: ""
+schema:
+  devices: device(subsystem=tty)
+#image: "ghcr.io/home-assistant/{arch}-addon-example"
