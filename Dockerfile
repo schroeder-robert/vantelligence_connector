@@ -8,5 +8,11 @@ RUN \
     curl -sSLf -o /usr/bin/tempio \
     "https://github.com/home-assistant/tempio/releases/download/${TEMPIO_VERSION}/tempio_${BUILD_ARCH}"
 
+RUN curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash
+RUN nvm install 22
+RUN node -v
+RUN nvm current
+RUN npm -v
+
 # Copy root filesystem
 #COPY rootfs /
