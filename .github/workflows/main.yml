@@ -10,7 +10,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4.2.2
         with:
-          repository: ha-addons
+          repository: schroeder-robert/ha-addons
           ref: main
           submodules: true
           
