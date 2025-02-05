@@ -13,6 +13,10 @@ jobs:
           repository: schroeder-robert/ha-addons
           ref: main
           submodules: true
+      - run: git submodule update --recursive --remote
+      - run: git add -A
+      - run: git commit -m 'updated submodules'
+      - run: git push
           
 #      - name: GitHub Script
 #        uses: actions/github-script@v7.0.1
