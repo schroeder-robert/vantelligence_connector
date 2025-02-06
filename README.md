@@ -1,6 +1,6 @@
-# Home Assistant Add-on: Example add-on
+# Home Assistant Add-on: Vantelligence Connector
 
-_Example add-on to use as a blueprint for new add-ons._
+A MQTT connector for devices, sensors and programms mostly used in camper vans. With support for Home Assistant.
 
 ![Supports aarch64 Architecture][aarch64-shield]
 ![Supports amd64 Architecture][amd64-shield]
@@ -15,11 +15,7 @@ _Example add-on to use as a blueprint for new add-ons._
 [i386-shield]: https://img.shields.io/badge/i386-yes-green.svg
 
 
-# Vantelligence Connector
-
-A MQTT connector for devices, sensors and programms mostly used in camper vans. With support for Home Assistant.
-
-<br>
+# Needs refactoring:
 
 ## Setup
 
