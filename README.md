@@ -17,6 +17,10 @@ A MQTT connector for devices, sensors and programms mostly used in camper vans. 
 
 # Needs refactoring:
 
+## Prerequisites
+
+- echo "dtoverlay=gpio-no-irq" >> "/boot/config.txt"
+
 ## Setup
 
 1. Run the install script:
