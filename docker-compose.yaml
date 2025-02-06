@@ -1,0 +1,6 @@
+services:
+  main:
+    container_name: connector
+    image: connector
+    build:
+      context: .
