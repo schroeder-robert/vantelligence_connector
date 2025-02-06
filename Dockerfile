@@ -17,3 +17,8 @@ RUN npm -v
 
 # Copy root filesystem
 #COPY rootfs /
+
+COPY run.sh /
+RUN chmod a+x /run.sh
+
+CMD [ "/run.sh" ]
