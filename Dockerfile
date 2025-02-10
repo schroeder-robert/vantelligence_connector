@@ -1,5 +1,5 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-dockerfile
-ARG BUILD_FROM=alpine:latest
+ARG BUILD_FROM=ghcr.io/home-assistant/amd64-base:3.21
 FROM $BUILD_FROM
 
 # Execute during the build of the image
@@ -10,13 +10,21 @@ FROM $BUILD_FROM
 
 RUN \
   apk add --no-cache \
-    nodejs=22.11.0-r1 \
+    linux-headers \
+    g++ \
+    make \
+    python3 \
+    nodejs \
     npm
-RUN node -v
-RUN npm -v
+RUN npm install -g node-gyp
 
 # Copy root filesystem
 #COPY rootfs /
+
+WORKDIR /connector
+
+COPY src/ .
+RUN npm install
 
 COPY run.sh /
 RUN chmod a+x /run.sh
