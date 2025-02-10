@@ -20,6 +20,7 @@ RUN npm install -g node-gyp
 
 # Copy root filesystem
 COPY rootfs /
+RUN chmod a+x /usr/bin/connector
 
 WORKDIR /connector
 
