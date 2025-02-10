@@ -19,14 +19,9 @@ RUN \
 RUN npm install -g node-gyp
 
 # Copy root filesystem
-#COPY rootfs /
+COPY rootfs /
 
 WORKDIR /connector
 
 COPY src/ .
 RUN npm install
-
-COPY run.sh /
-RUN chmod a+x /run.sh
-
-ENTRYPOINT [ "/run.sh" ]
