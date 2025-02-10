@@ -5,12 +5,33 @@ support:
 #   id: bluetooth
 #   class: Bluetooth
 devices:
-# - name: Akku
-#   id: akku
-#   class: JBD_BMS
-#   connection:
-#     type: serial
-#     port: "/dev/ttyUSB0"
+- name: B2B-Laderegler
+  id: b2b_laderegler
+  class: Votronic_VCC_1212
+  connection:
+    type: serial
+    port: /dev/serial/by-id/charger
+- name: Solar-Laderegler
+  id: solar_laderegler
+  class: Ective_DSC
+  connection:
+    type: serial
+    port: /dev/serial/by-id/solar
+- name: Dieselheizung
+  id: dieselheizung
+  class: Autoterm_Air_2D
+  subscribe:
+    temperature_current: connector/device/luftsensor/temperature/state
+  connection:
+    type: serial
+    port: /dev/serial/by-id/heater
+- name: Akku
+  id: akku
+  class: JBD_BMS
+  connection:
+    type: serial
+    port: /dev/serial/by-id/battery
+
 # - name: Temperatursensor
 #   id: temperatursensor
 #   class: DS18B20
