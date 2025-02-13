@@ -264,7 +264,6 @@ export default class extends Device {
     this.emitEntity({
       name: 'Auslegungskapazität',
       key: 'design_capacity',
-      class: 'energy',
       unit: 'Ah',
       states: {
         state: data.designCapacity / 100
@@ -274,7 +273,6 @@ export default class extends Device {
     this.emitEntity({
       name: 'Zykluskapazität',
       key: 'cycle_capacity',
-      class: 'energy',
       unit: 'Ah',
       states: {
         state: data.cycleCapacity / 100
