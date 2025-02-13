@@ -318,6 +318,10 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
     }
   }
 
+  if (typeof entity.category === 'string') {
+    config.entity_category = entity.category
+  }
+
   if (typeof entity.availability === 'string') {
     config['availability_topic'] = getEntityTopic(device, entity) + '/availability'
   }

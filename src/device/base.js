@@ -10,6 +10,37 @@ export default class {
     this.options = {}
     this.onMessageCallback = null
     this.onEntityUpdateCallback = null
+    this.TYPE = {
+      binary_sensor: 'binary_sensor',
+      sensor: 'sensor',
+      switch: 'switch',
+      light: 'light'
+    }
+    this.CATEGORY = {
+      config: 'config',
+      diagnostic: 'diagnostic'
+    }
+    this.CLASS = {
+      temperature: 'temperature',
+      voltage: 'voltage',
+      current: 'current',
+      battery: 'battery',
+      frequency: 'frequency',
+      date: 'date'
+    }
+    this.UNIT = {
+      celsius: '°C',
+      volt: 'V',
+      ampere: 'A',
+      percent: '%',
+      hertz: 'Hz',
+      rpm: 'RPM',
+      ampereHour: 'Ah'
+    }
+    this.STATE = {
+      on: 'ON',
+      off: 'OFF'
+    }
   }
 
   get name () {

@@ -76,7 +76,7 @@ export default class extends Device {
       name: pin.name,
       key: 'pin_' + pin.id,
       states: {
-        state: (state && !pin.inverted) || (!state && pin.inverted) ? 'ON' : 'OFF'
+        state: state ? this.STATE.on : this.STATE.off
       },
       ...entity
     })
@@ -85,7 +85,7 @@ export default class extends Device {
   async handle (key, state, value) {
     const id = parseInt(key.split('_')[1])
     const pin = this.config.pins.find(pin => pin.id == id)
-    const to = ((value === 'ON' && !pin.inverted) || (value !== 'ON' && pin.inverted)) ? true : false
+    const to = ((value === this.STATE.on && !pin.inverted) || (value !== this.STATE.on && pin.inverted)) ? true : false
 
     if (pin) {
       this.mcp.setPin(id, to)

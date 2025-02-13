@@ -301,6 +301,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Blackbox-Version',
       key: 'blackbox_version',
+      category: this.CATEGORY.diagnostic,
       states: {
         state: parseInt(buffer[4])
       }
@@ -317,7 +318,7 @@ export default class extends Device {
 
       data.statusCode = buffer.readUInt8(0) + '.' + buffer.readUInt8(1)
       data.boardTemp = buffer.readUInt8(3)
-      data.externalTemp = buffer.readUInt8(4)
+      data.externalTemp = buffer.readInt8(4)
       data.control = ['0.1', '4.0'].includes(data.statusCode) ? 'off' : (data.statusCode === '3.35' ? 'fan_only' : 'heat')
       data.status = STATUS_OPTIONS[data.statusCode] || 'unbekannt'
       data.voltage = buffer.readUInt8(6) / 10
@@ -332,8 +333,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Temperatur Innenraum',
       key: 'temperature_intake',
-      class: 'temperature',
-      unit: '°C',
+      class: this.CLASS.temperature,
+      unit: this.UNIT.celsius,
       states: {
         state: data.boardTemp > 127 ? data.boardTemp - 255 : data.boardTemp
       }
@@ -342,6 +343,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Statuscode',
       key: 'status_code',
+      category: this.CATEGORY.diagnostic,
       states: {
         state: data.statusCode
       }
@@ -358,18 +360,20 @@ export default class extends Device {
     this.emitEntity({
       name: 'Temperatur extern',
       key: 'temperature_sensor',
-      class: 'temperature',
-      unit: '°C',
+      class: this.CLASS.temperature,
+      category: this.CATEGORY.diagnostic,
+      unit: this.UNIT.celsius,
       states: {
-        state: data.externalTemp > 127 ? data.externalTemp - 255 : data.externalTemp
+        state: data.externalTemp
       }
     })
 
     this.emitEntity({
       name: 'Spannung',
       key: 'voltage',
-      class: 'voltage',
-      unit: 'V',
+      class: this.CLASS.voltage,
+      unit: this.UNIT.volt,
+      category: this.CATEGORY.diagnostic,
       states: {
         state: data.voltage
       }
@@ -378,8 +382,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Temperatur Wärmetauscher',
       key: 'temperature_heat_exchanger',
-      class: 'temperature',
-      unit: '°C',
+      class: this.CLASS.temperature,
+      unit: this.UNIT.celsius,
       states: {
         state: data.temperatureHeatExchanger
       }
@@ -388,7 +392,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Lüfterdrehzahl Vorgabe',
       key: 'fan_rpm_specified',
-      unit: 'RPM',
+      category: this.CATEGORY.diagnostic,
+      unit: this.UNIT.rpm,
       states: {
         state: data.fanRpmSpecified
       }
@@ -397,7 +402,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Lüfterdrehzahl Aktuell',
       key: 'fan_rpm_actual',
-      unit: 'RPM',
+      unit: this.UNIT.rpm,
       states: {
         state: data.fanRpmActual
       }
@@ -406,8 +411,9 @@ export default class extends Device {
     this.emitEntity({
       name: 'Frequenz Kraftstoffpumpe',
       key: 'frequency_fuel_pump',
-      class: 'frequency',
-      unit: 'Hz',
+      category: this.CATEGORY.diagnostic,
+      class: this.CLASS.frequency,
+      unit: this.UNIT.hertz,
       states: {
         state: data.frequencyFuelPump
       }
@@ -461,6 +467,7 @@ export default class extends Device {
       type: 'select',
       name: 'Sensor',
       key: 'sensor',
+      category: this.CATEGORY.config,
       options: SENSOR_OPTIONS,
       commands: ['command'],
       states: {
@@ -531,8 +538,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Temperatur Bedienpanel',
       key: 'temperature_panel',
-      class: 'temperature',
-      unit: '°C',
+      class: this.CLASS.temperature,
+      unit: this.UNIT.celsius,
       states: {
         state: data.value
       }

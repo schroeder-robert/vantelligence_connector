@@ -115,6 +115,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Anzahl Zellen',
       key: 'cells_amount',
+      category: this.CATEGORY.diagnostic,
       states: {
         state: count
       }
@@ -124,8 +125,9 @@ export default class extends Device {
       this.emitEntity({
         name: ' Zelle ' + (i + 1) + ' Spannung',
         key: 'cell_' + i + '_voltage',
-        class: 'voltage',
-        unit: 'V',
+        category: this.CATEGORY.diagnostic,
+        class: this.CLASS.voltage,
+        unit: this.UNIT.volt,
         states: {
           state: buffer.readUInt16BE(i * 2) / 1000
         }
@@ -142,7 +144,7 @@ export default class extends Device {
       }
 
       data.packVoltage = buffer.readUInt16BE(0)
-      data.packCurrent = buffer.readUInt16BE(2)
+      data.packCurrent = buffer.readInt16BE(2)
       data.cycleCapacity = buffer.readUInt16BE(4)
       data.designCapacity = buffer.readUInt16BE(6)
       data.cycleCount = buffer.readUInt16BE(8)
@@ -172,8 +174,9 @@ export default class extends Device {
         this.emitEntity({
           name: 'Zelle ' + (i + 1) + ' Temperatur',
           key: 'cell_' + i + '_temperature',
-          class: 'temperature',
-          unit: '°C',
+          category: this.CATEGORY.diagnostic,
+          class: this.CLASS.temperature,
+          unit: this.UNIT.celsius,
           states: {
             state: (temp - 2731) / 10
           }
@@ -186,6 +189,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Anzahl Temperatursensoren',
       key: 'temperature_sensor_count',
+      category: this.CATEGORY.diagnostic,
       states: {
         state: data.ntcCount
       }
@@ -197,9 +201,10 @@ export default class extends Device {
       this.emitEntity({
         name: 'Zelle ' + (i + 1) + ' Balance',
         key: 'cell_' + i + '_balance',
-        type: 'binary_sensor',
+        category: this.CATEGORY.diagnostic,
+        type: this.TYPE.binary_sensor,
         states: {
-          state: (bits >> i%16) & 1 ? 'ON' : 'OFF'
+          state: (bits >> i%16) & 1 ? this.STATE.on : this.STATE.off
         }
       })
     }
@@ -207,26 +212,28 @@ export default class extends Device {
     this.emitEntity({
       name: 'Ladung',
       key: 'charge',
-      type: 'binary_sensor',
+      category: this.CATEGORY.diagnostic,
+      type: this.TYPE.binary_sensor,
       states: {
-        state: data.fetStatus & 1 ? 'ON' : 'OFF'
+        state: data.fetStatus & 1 ? this.STATE.on : this.STATE.off
       }
     })
 
     this.emitEntity({
       name: 'Entladung',
       key: 'discharge',
-      type: 'binary_sensor',
+      category: this.CATEGORY.diagnostic,
+      type: this.TYPE.binary_sensor,
       states: {
-        state: data.fetStatus >> 1 ? 'ON' : 'OFF'
+        state: data.fetStatus >> 1 ? this.STATE.on : this.STATE.off
       }
     })
 
     this.emitEntity({
       name: 'Spannung',
       key: 'voltage',
-      class: 'voltage',
-      unit: 'V',
+      class: this.CLASS.voltage,
+      unit: this.UNIT.volt,
       states: {
         state: data.packVoltage / 100
       }
@@ -235,18 +242,18 @@ export default class extends Device {
     this.emitEntity({
       name: 'Strom',
       key: 'current',
-      class: 'current',
-      unit: 'A',
+      class: this.CLASS.current,
+      unit: this.UNIT.ampere,
       states: {
-        state: data.packCurrent
+        state: data.packCurrent / 100
       }
     })
 
     this.emitEntity({
       name: 'Ladezustand',
       key: 'state_of_charge',
-      class: 'battery',
-      unit: '%',
+      class: this.CLASS.battery,
+      unit: this.UNIT.percent,
       states: {
         state: data.stateOfCharge
       }
@@ -255,7 +262,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Herstellungsdatum',
       key: 'manufacture_date',
-      class: 'date',
+      category: this.CATEGORY.diagnostic,
+      class: this.CLASS.date,
       states: {
         state: [(data.manufactureDate >> 9) + 2000, ((data.manufactureDate >> 5) & 15).toString(10).padStart(2, '0'), (data.manufactureDate & 31).toString(10).padStart(2, '0')].join('-')
       }
@@ -264,7 +272,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Auslegungskapazität',
       key: 'design_capacity',
-      unit: 'Ah',
+      category: this.CATEGORY.diagnostic,
+      unit: this.UNIT.ampereHour,
       states: {
         state: data.designCapacity / 100
       }
@@ -273,7 +282,8 @@ export default class extends Device {
     this.emitEntity({
       name: 'Zykluskapazität',
       key: 'cycle_capacity',
-      unit: 'Ah',
+      category: this.CATEGORY.diagnostic,
+      unit: this.UNIT.ampereHour,
       states: {
         state: data.cycleCapacity / 100
       }
@@ -282,6 +292,7 @@ export default class extends Device {
     this.emitEntity({
       name: 'Ladezyklen',
       key: 'cycle_count',
+      category: this.CATEGORY.diagnostic,
       states: {
         state: data.cycleCount
       }
@@ -291,9 +302,10 @@ export default class extends Device {
       this.emitEntity({
         name: ERRORS[key],
         key,
-        type: 'binary_sensor',
+        type: this.TYPE.binary_sensor,
+        category: this.CATEGORY.diagnostic,
         states: {
-          state: (data.errors >> i) & 1 ? 'ON' : 'OFF'
+          state: (data.errors >> i) & 1 ? this.STATE.on : this.STATE.off
         }
       })
     })
