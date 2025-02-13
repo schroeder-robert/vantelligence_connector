@@ -291,8 +291,7 @@ export default class extends Device {
       this.emitEntity({
         name: ERRORS[key],
         key,
-        type: 'event',
-        events: 'pressed',
+        type: 'binary_sensor',
         states: {
           state: (data.errors >> i) & 1 ? 'ON' : 'OFF'
         }
