@@ -83,12 +83,13 @@ export default class extends Device {
   }
 
   async handle (key, state, value) {
-    const id = parseInt(key.split('_')[1])
-    const pin = this.config.pins.find(pin => pin.id == id)
+    // const id = parseInt(key.split('_')[1])
+    // const pin = this.config.pins.find(pin => pin.id == id)
+    const pin = this.config.pins.find(pin => pin.key == key)
     const to = ((value === this.STATE.on && !pin.inverted) || (value !== this.STATE.on && pin.inverted)) ? true : false
 
     if (pin) {
-      this.mcp.setPin(id, to)
+      this.mcp.setPin(pin.id, to)
       this.emitSwitch(pin, to)
     }
   }
