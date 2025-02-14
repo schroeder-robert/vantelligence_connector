@@ -74,7 +74,7 @@ export default class extends Device {
   emit (pin, state, entity) {
     this.emitEntity({
       name: pin.name,
-      key: 'pin_' + pin.id,
+      key: pin.key || 'pin_' + pin.id,
       states: {
         state: state ? this.STATE.on : this.STATE.off
       },

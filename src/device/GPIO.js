@@ -18,13 +18,13 @@ export default class extends Device {
     pins.forEach(pin => {
       const entity = {
         name: pin.name,
-        key: 'pin_' + pin.id
+        key: pin.key || 'pin_' + pin.id
       }
       const emit = pin => {
         const state = rpio.read(pin.id)
 
         entity.states = {
-          state: (state === 1 && !pin.inverted) || (state !== 1 && pin.inverted) ? 'ON' : 'OFF'
+          state: (state === 1 && !pin.inverted) || (state !== 1 && pin.inverted) ? this.STATE.on : this.STATE.off
         }
 
         this.emitEntity(entity)

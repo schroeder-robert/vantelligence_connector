@@ -306,6 +306,7 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   let type = entity.type || 'sensor'
   const config = {
     name: entity.name,
+    object_id: id,
     unique_id: id,
     device_class: entity.class,
     icon: entity.icon,

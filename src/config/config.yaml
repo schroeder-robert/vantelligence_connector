@@ -96,39 +96,50 @@ devices:
     type: in
     inverted: true
   - name: Taster hinten
+    key: taster_hinten
     id: 5
     type: in
     inverted: true
   - name: Taster links
+    key: taster_links
     id: 6
     type: in
     inverted: true
-  - name: Taster richts
+  - name: Taster rechts
+    key: taster_rechts
     id: 7
     type: in
     inverted: true
   - name: Abwasserventil auf
+    key: abwasserventil_auf
     id: 8
     type: out
   - name: Abwasserventil zu
+    key: abwasserventil_zu
     id: 9
     type: out
   - name: Wasserpumpe
+    key: wasserpumpe
     id: 10
     type: out
   - name: B2B Laderegler
+    key: b2b_laderegler
     id: 11
     type: out
   - name: Soundsystem
+    key: soundsystem
     id: 12
     type: out
   - name: Licht
+    key: licht
     id: 13
     type: out
   - name: Kühlschrank
+    key: kuehlschrank
     id: 14
     type: out
   - name: Dashcam
+    key: dashcam
     id: 15
     type: out
 - name: GPIO
