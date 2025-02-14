@@ -68,7 +68,7 @@ devices:
     scale: 100
     unit: "%"
 - name: I/O Expander
-  id: ioexpander
+  id: gpio
   class: MCP23017
   connection:
     type: i2c
@@ -95,44 +95,44 @@ devices:
     id: 4
     type: in
     inverted: true
-  - name: Input5
+  - name: Taster hinten
     id: 5
     type: in
     inverted: true
-  - name: Input6
+  - name: Taster links
     id: 6
     type: in
     inverted: true
-  - name: Input7
+  - name: Taster richts
     id: 7
     type: in
     inverted: true
-  - name: Output0
+  - name: Abwasserventil auf
     id: 8
     type: out
-  - name: Output1
+  - name: Abwasserventil zu
     id: 9
     type: out
-  - name: Output2
+  - name: Wasserpumpe
     id: 10
     type: out
-  - name: Output3
+  - name: B2B Laderegler
     id: 11
     type: out
-  - name: Output4
+  - name: Soundsystem
     id: 12
     type: out
-  - name: Output5
+  - name: Licht
     id: 13
     type: out
-  - name: Output6
+  - name: Kühlschrank
     id: 14
     type: out
-  - name: Output7
+  - name: Dashcam
     id: 15
     type: out
 - name: GPIO
-  id: gpio
+  id: gpio_pi
   class: GPIO
   pins:
   - name: Kanal 1+2
