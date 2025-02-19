@@ -13,13 +13,9 @@ arch:
 init: false
 hassio_api: true
 startup: services
-ports:
-  8000/tcp: 8000
-#webui: http://localhost:8000
 services:
   - mqtt:need
 map:
-  - addon_config:rw
   - share:rw
 full_access: true
 #image: "ghcr.io/home-assistant/{arch}-addon-example"
