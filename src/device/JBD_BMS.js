@@ -1,4 +1,5 @@
 import Device from './base.js'
+import KalmanFilter from 'kalmanjs'
 
 const START_BYTE = 0xDD
 const END_BYTE = 0x77
@@ -32,6 +33,10 @@ export default class extends Device {
     
     this.manufacturer = 'JBD'
     this.sendSerial = null
+    this.filters = {
+      packVoltage: new KalmanFilter({ R: 5, Q: 1 }),
+      packCurrent: new KalmanFilter({ R: 5, Q: 1 })
+    }
   }
 
   async connect () {
@@ -143,8 +148,8 @@ export default class extends Device {
         throw new Error('Buffer too short')
       }
 
-      data.packVoltage = buffer.readUInt16BE(0)
-      data.packCurrent = buffer.readInt16BE(2)
+      data.packVoltage = this.filters.packVoltage.filter(buffer.readUInt16BE(0))
+      data.packCurrent = this.filters.packCurrent.filter(buffer.readInt16BE(2))
       data.cycleCapacity = buffer.readUInt16BE(4)
       data.designCapacity = buffer.readUInt16BE(6)
       data.cycleCount = buffer.readUInt16BE(8)
@@ -235,7 +240,7 @@ export default class extends Device {
       class: this.CLASS.voltage,
       unit: this.UNIT.volt,
       states: {
-        state: data.packVoltage / 100
+        state: Math.round(data.packVoltage) / 100
       }
     })
 
@@ -245,7 +250,7 @@ export default class extends Device {
       class: this.CLASS.current,
       unit: this.UNIT.ampere,
       states: {
-        state: data.packCurrent / 100
+        state: Math.round(data.packCurrent) / 100
       }
     })
 

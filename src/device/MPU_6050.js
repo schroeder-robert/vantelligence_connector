@@ -3,16 +3,6 @@ import MPU6050 from 'i2c-mpu6050'
 import Device from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-const filterRotationX = new KalmanFilter({ R: 0.01, Q: 1 })
-const filterRotationY = new KalmanFilter({ R: 0.01, Q: 1 })
-const filterAccelX = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterAccelY = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterAccelZ = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterGyroX = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterGyroY = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterGyroZ = new KalmanFilter({ R: 0.01, Q: 3 })
-const filterTemp = new KalmanFilter({ R: 0.01, Q: 3 })
-
 export default class extends Device {
   constructor (config) {
     super(config)
@@ -21,6 +11,17 @@ export default class extends Device {
     this.model = 'MPU-6050'
     this.version = '1'
     this.sensor = null
+    this.filters = {
+      rotationX: new KalmanFilter({ R: 0.01, Q: 1 }),
+      rotationY: new KalmanFilter({ R: 0.01, Q: 1 }),
+      accelX: new KalmanFilter({ R: 0.01, Q: 3 }),
+      accelY: new KalmanFilter({ R: 0.01, Q: 3 }),
+      accelZ: new KalmanFilter({ R: 0.01, Q: 3 }),
+      gyroX: new KalmanFilter({ R: 0.01, Q: 3 }),
+      gyroY: new KalmanFilter({ R: 0.01, Q: 3 }),
+      gyroZ: new KalmanFilter({ R: 0.01, Q: 3 }),
+      temp: new KalmanFilter({ R: 0.01, Q: 3 })
+    }
   }
 
   async connect () {
@@ -62,15 +63,15 @@ export default class extends Device {
       for (let i = 0; i < samples; ++i) {
         data = this.sensor.readSync()
 
-        rotationX = filterRotationX.filter(data.rotation.x)
-        rotationY = filterRotationY.filter(data.rotation.y)
-        accelX = filterAccelX.filter(data.accel.x)
-        accelY = filterAccelY.filter(data.accel.y)
-        accelZ = filterAccelZ.filter(data.accel.z)
-        gyroX = filterGyroX.filter(data.gyro.x)
-        gyroY = filterGyroY.filter(data.gyro.y)
-        gyroZ = filterGyroZ.filter(data.gyro.z)
-        temp = filterTemp.filter(data.temp)
+        rotationX = this.filters.rotationX.filter(data.rotation.x)
+        rotationY = this.filters.rotationY.filter(data.rotation.y)
+        accelX = this.filters.accelX.filter(data.accel.x)
+        accelY = this.filters.accelY.filter(data.accel.y)
+        accelZ = this.filters.accelZ.filter(data.accel.z)
+        gyroX = this.filters.gyroX.filter(data.gyro.x)
+        gyroY = this.filters.gyroY.filter(data.gyro.y)
+        gyroZ = this.filters.gyroZ.filter(data.gyro.z)
+        temp = this.filters.temp.filter(data.temp)
 
         await this.wait(500 / samples)
       }

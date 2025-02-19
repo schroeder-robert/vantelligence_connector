@@ -2,8 +2,6 @@ import ADS1115 from 'ads1115'
 import Device from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-const kf = new KalmanFilter({R: 0.01, Q: 3})
-
 export default class extends Device {
   constructor (config) {
     super(config)
