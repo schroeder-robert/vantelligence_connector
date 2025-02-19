@@ -7,9 +7,6 @@ devices:
 #   connection:
 #     bus: can0
 
-- name: Befehle
-  id: command
-  class: Command
 - name: Bluetooth
   id: bluetooth
   class: Bluetooth
