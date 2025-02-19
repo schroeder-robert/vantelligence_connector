@@ -49,7 +49,7 @@ try {
 
 function startHttp () {
   const host = 'localhost'
-  const port = 8000
+  const port = 8066
   const server = http.createServer((request, response) => {
     const types = {
       '.html': 'text/html',
@@ -107,7 +107,7 @@ function startHttp () {
 }
 
 function startWebsocket () {
-  const server = new WebSocketServer({ port: process.env.WEBSOCKET_PORT || 8080 })
+  const server = new WebSocketServer({ port: process.env.WEBSOCKET_PORT || 8067 })
 
   server.on('connection', client => {
     const connection = {

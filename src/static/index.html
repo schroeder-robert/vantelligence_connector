@@ -10,7 +10,7 @@
     }
 
     function connect () {
-      const ws = new WebSocket('ws://' + window.location.hostname + ':8080')
+      const ws = new WebSocket('ws://' + window.location.hostname + ':8067')
       const style = document.querySelector(':root').style
       const labelFront = document.querySelector('.axes div:nth-child(1) span')
       const labelRear = document.querySelector('.axes div:nth-child(2) span')
