@@ -1,7 +1,7 @@
 const subscriptions = {}
 
 function connect () {
-  const ws = new WebSocket('ws://' + window.location.host + window.location.pathname)
+  const ws = new WebSocket((window.location.protocol === 'https:' ? 'wss://' : 'ws://') + window.location.host + window.location.pathname)
 
   ws.addEventListener('open', e => {
     ws.send(JSON.stringify({

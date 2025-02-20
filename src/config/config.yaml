@@ -114,7 +114,7 @@ devices:
   id: dieselheizung
   class: Autoterm_Air_2D
   subscribe:
-    temperature_current: connector/device/luftsensor/temperature/state
+    temperature_current: device/luftsensor/temperature/state
   connection:
     type: serial
     port: /dev/serial/by-id/heater

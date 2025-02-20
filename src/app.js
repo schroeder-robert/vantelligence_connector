@@ -52,7 +52,6 @@ function startHttp () {
   const websocket = new WebSocketServer({ noServer: true })
 
   websocket.on('connection', client => {
-    console.log('CONN')
     const connection = {
       client,
       topics: []
@@ -68,7 +67,7 @@ function startHttp () {
         connection.topics = data.subscribe
       }
 
-      console.log('received: %s', data)
+      // console.log('received: %s', data)
     })
 
     //client.send('welcome, there are others: ' + WS_CLIENTS.length)
@@ -172,6 +171,8 @@ function connectMqtt () {
   client.on('message', (topic, message) => {
     const parts = topic.split('/')
 
+    topic = topic.slice(BASE_TOPIC.length + 1)
+
     if (parts[0] === BASE_TOPIC) {
       if (parts[1] === CONFIG_TOPIC) {
         log('✨', 'New config discovered. Processing...')
@@ -215,8 +216,14 @@ async function processConfig (client, data) {
       const device = new deviceClass(config)
       let result = null
 
-      device.onEntityUpdate(entity => processEntity(client, device, entity, data.support))
       device.onMessage((icon, message) => log(icon, message, device))
+      device.onEntityUpdate(entity => {
+        publish(client, device, entity, data.support)
+
+        if (entity.commands instanceof Array) {
+          entity.commands.forEach(command => subscribe(client, getEntityTopic(device, entity) + '/' + command, device, entity.key))
+        }
+      })
 
       try {
         result = await device.connect()
@@ -243,14 +250,6 @@ async function processConfig (client, data) {
   }
 }
 
-function processEntity (client, device, entity, support) {
-  publish(client, device, entity, support)
-
-  if (entity.commands instanceof Array) {
-    entity.commands.forEach(command => subscribe(client, getEntityTopic(device, entity) + '/' + command, device, entity.key))
-  }
-}
-
 function publish (client, device, entity, support) {
   const topic = getEntityTopic(device, entity)
 
@@ -261,7 +260,7 @@ function publish (client, device, entity, support) {
   })
 
   if (!PUBLISH_TOPICS.includes(topic)) {
-    log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(topic) + '"', device)
+    log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(BASE_TOPIC + '/' + topic) + '"', device)
 
     client.publish(topic, JSON.stringify(entity), { retain: true })
 
@@ -269,12 +268,12 @@ function publish (client, device, entity, support) {
   }
 
   if (typeof entity.availability === 'string') {
-    client.publish(getEntityTopic(device, entity) + '/availability', entity.availability, { retain: true })
+    client.publish(BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/availability', entity.availability, { retain: true })
   }
 
   if (entity.states instanceof Object) {
     Object.entries(entity.states).forEach(([key, state]) => {
-      client.publish(getEntityTopic(device, entity) + '/' + key, String(state), { retain: true })
+      client.publish(BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + key, String(state), { retain: true })
     })
   }
 
@@ -294,7 +293,7 @@ function subscribe (client, topic, device, key) {
 
   SUBSCRIBED_TOPICS[topic][device.id] = (state, value) => device.handle(key, state, value)
 
-  client.subscribe(topic)
+  client.subscribe(BASE_TOPIC + '/' + topic)
 
   log('📡', 'subscribed to topic "' + chalk.yellow(topic) + '"', device)
 
@@ -302,7 +301,7 @@ function subscribe (client, topic, device, key) {
 }
 
 function getEntityTopic (device, entity) {
-  return [BASE_TOPIC, DEVICE_TOPIC, device.id, (entity.key ? entity.key : entity)].join('/')
+  return [DEVICE_TOPIC, device.id, (entity.key ? entity.key : entity)].join('/')
 }
 
 function publishHomeAssistantDiscovery (client, device, entity, topic) {
