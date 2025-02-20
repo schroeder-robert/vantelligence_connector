@@ -1,16 +1,19 @@
 import bus from 'i2c-bus'
 import PCA9685 from 'pca9685'
-import Device from './base.js'
+import base from './base.js'
 
 const LIGHT_BRIGHTNESS_SCALE = 255
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'NXP',
+  model: 'PCA9685',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'NXP'
-    this.model = 'PCA9685'
-    this.version = '1'
     this.controller = null
   }
 

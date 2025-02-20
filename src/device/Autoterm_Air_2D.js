@@ -1,4 +1,4 @@
-import Device from './base.js'
+import base from './base.js'
 
 const TEMP_MIN = 0
 const TEMP_MAX = 30
@@ -85,13 +85,16 @@ const ERROR_PROCESS_STATUS_MESSAGE = 'Cannot process status message: '
 const ERROR_PROCESS_SETTINGS_MESSAGE = 'Cannot process settings message: '
 const ERROR_PROCESS_TEMPERATURE_MESSAGE = 'Cannot process temperature message: '
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Autoterm',
+  model: 'Air 2D',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Autoterm'
-    this.model = 'Air 2D'
-    this.version = ''
     this.buffer = []
     this.timeout = null
     this.port = null

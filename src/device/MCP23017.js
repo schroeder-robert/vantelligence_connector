@@ -1,14 +1,17 @@
 import i2c from 'i2c-bus'
 import { MCP23017 } from 'i2c-io-expanders'
-import Device from './base.js'
+import base from './base.js'
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Microchip',
+  model: 'MCP23017',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Microchip'
-    this.model = 'MCP23017'
-    this.version = '1'
     this.mcp = null
   }
 

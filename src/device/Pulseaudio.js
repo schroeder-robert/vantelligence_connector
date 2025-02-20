@@ -1,15 +1,18 @@
-import Device from './base.js'
+import base from './base.js'
 import { PulseAudio, percentToVolume, volumeToPercent, dBToVolume, volumeTodB } from 'pulseaudio.js'
 
 const DB_MIN = -130
 
-export default class extends Device {
-  constructor (config) {
-    super(config)
+export const info = {
+  manufacturer: 'Raspberry Pi',
+  model: 'Pulseaudio',
+  version: '1'
+}
 
-    this.manufacturer = 'Raspberry Pi'
-    this.model = 'Pulseaudio'
-    this.version = '1'
+export const device = class extends base {
+  constructor (config) {
+    super(info, config)
+
     this.client = null
   }
 

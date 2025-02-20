@@ -1,15 +1,18 @@
 import bus from 'i2c-bus'
 import display from 'oled-i2c-bus'
-import Device from './base.js'
+import base from './base.js'
 import font from 'oled-font-5x7'
 
-export default class extends Device {
+export const info = {
+  manufacturer: '?',
+  model: 'OLED',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = '?'
-    this.model = 'OLED'
-    this.version = '1'
     this.bus = null
   }
 

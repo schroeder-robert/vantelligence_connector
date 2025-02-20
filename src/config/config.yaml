@@ -3,13 +3,13 @@ support:
 devices:
 # - name: HS-Can
 #   id: hscan
-#   class: Socketcan
+#   class: MadeByRob_Socketcan
 #   connection:
 #     bus: can0
 
 # - name: Bluetooth
 #   id: bluetooth
-#   class: Bluetooth
+#   class: MadeByRob_Bluetooth
 
 # - name: PWM-Controller
 #   id: pwmcontroller
@@ -50,6 +50,7 @@ devices:
 #   connection:
 #     type: i2c
 #     bus: 1
+
 # - name: Helligkeitssensor
 #   id: helligkeitssensor
 #   class: BH1750
@@ -68,7 +69,7 @@ devices:
 
 # - name: Lichtsteuerung außen
 #   id: lichtsteuerung_aussen
-#   class: Arduino
+#   class: MadeByRob_Arduino
 #   connection:
 #     type: i2c
 #     bus: 1
@@ -232,7 +233,7 @@ devices:
     type: out
 - name: GPIO
   id: gpio_pi
-  class: GPIO
+  class: RaspberryPi_GPIO
   pins:
   - name: Kanal 1+2
     id: 36

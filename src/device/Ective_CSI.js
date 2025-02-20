@@ -1,5 +1,5 @@
 import { pigpio } from 'pigpio-client'
-import Device from './base.js'
+import base from './base.js'
 
 const MODE_OPTIONS = [
   'ECO',
@@ -10,13 +10,16 @@ let POWER_PIN = null
 let MODE_PIN = null
 let DATA_PIN = null
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Ective',
+  model: 'CSI',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Ective'
-    this.model = 'CSI'
-    this.version = '1'
     this.buffer = []
     this.timeout = null
     this.port = null

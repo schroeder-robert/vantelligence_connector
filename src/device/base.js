@@ -2,10 +2,15 @@ import chalk from 'chalk'
 import { SerialPort } from 'serialport'
 import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 
+export const hidden = true
+
 export default class {
-  constructor (config) {
-    this.manufacturer = 'DEFAULT'
-    this.model = 'DEFAULT'
+  constructor (info, config) {
+    this.manufacturer = info.manufacturer || 'DEFAULT'
+    this.model = info.model || 'DEFAULT'
+    this.version = info.version || '0'
+    this.description = info.description || ''
+    this.category = info.category || 'other'
     this.config = config
     this.options = {}
     this.onMessageCallback = null

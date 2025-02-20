@@ -1,4 +1,4 @@
-import Device from './base.js'
+import base from './base.js'
 import { spawn, spawnSync } from 'node:child_process'
 
 const ICONS = {
@@ -6,13 +6,16 @@ const ICONS = {
   phone: 'mdi:cellphone',
 }
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'MadeByRob',
+  model: 'Bluetooth',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Bluetooth'
-    this.model = 'Player'
-    this.version = '1'
     this.devices = []
     this.device = null
     this.player = null

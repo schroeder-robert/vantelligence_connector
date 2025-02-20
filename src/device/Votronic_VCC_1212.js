@@ -1,14 +1,16 @@
-import Device from './base.js'
+import base from './base.js'
 
 const ERROR_PROCESS_MESSAGE = 'Cannot process info message: '
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Votronic',
+  model: 'VCC 1212-30',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
-    
-    this.manufacturer = 'Votronic'
-    this.model = 'VCC 1212-30'
-    this.version = '1'
+    super(info, config)
   }
 
   async connect () {

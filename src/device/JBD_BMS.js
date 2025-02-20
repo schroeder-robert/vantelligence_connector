@@ -1,4 +1,4 @@
-import Device from './base.js'
+import base from './base.js'
 import KalmanFilter from 'kalmanjs'
 
 const START_BYTE = 0xDD
@@ -27,11 +27,16 @@ const ERROR_PROCESS_INFO_MESSAGE = 'Cannot process info message: '
 const ERROR_REGISTER_RESPONSE = 'Response error for register: '
 const ERROR_REGISTER_UNKNOWN = 'Unknown response register: '
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'JBD',
+  model: '',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'JBD'
     this.sendSerial = null
     this.filters = {
       packVoltage: new KalmanFilter({ R: 5, Q: 1 }),

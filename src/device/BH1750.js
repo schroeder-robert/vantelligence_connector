@@ -1,13 +1,16 @@
 import bus from 'i2c-bus'
-import Device from './base.js'
+import base from './base.js'
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'ROHM Semiconductor',
+  model: 'BH1750',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'ROHM Semiconductor'
-    this.model = 'BH1750'
-    this.version = '1'
     this.bus = null
   }
 

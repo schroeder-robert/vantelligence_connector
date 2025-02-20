@@ -1,12 +1,18 @@
 import can from 'socketcan'
-import Device from './base.js'
+import base from './base.js'
 
 const STORE = {}
 const values = {}
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'MadeByRob',
+  model: 'CAN-Bus Ford',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
 
     this.manufacturer = '...'
     this.model = 'CAN'

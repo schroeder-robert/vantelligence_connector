@@ -1,4 +1,4 @@
-import Device from './base.js'
+import base from './base.js'
 import { DelimiterParser } from '@serialport/parser-delimiter'
 
 const REGISTERS = {
@@ -9,13 +9,16 @@ const REGISTERS = {
 const ERROR_PROCESS_STATUS_MESSAGE = 'Cannot process info message: '
 const ERROR_REGISTER_UNKNOWN = 'Unknown response register: '
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Ective',
+  model: 'DSC',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Ective'
-    this.model = 'DSC'
-    this.version = '1'
     this.sendSerial = null
   }
 

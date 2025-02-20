@@ -1,16 +1,19 @@
 import i2c from 'i2c-bus'
-import Device from './base.js'
+import base from './base.js'
 
 const ADDRESS = 0x08
 const BRIGHTNESS_SCALE = 255
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'MadeByRob',
+  model: 'Arduino Light Controller',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Arduino'
-    this.model = 'Light Controller'
-    this.version = '1'
     this.bus = null
   }
 

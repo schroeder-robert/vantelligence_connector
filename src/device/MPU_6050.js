@@ -1,15 +1,18 @@
 import i2c from 'i2c-bus'
 import MPU6050 from 'i2c-mpu6050'
-import Device from './base.js'
+import base from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'TDK InvenSense',
+  model: 'MPU-6050',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'TDK InvenSense'
-    this.model = 'MPU-6050'
-    this.version = '1'
     this.sensor = null
     this.flipX = this.config.axles?.x?.flip ? -1 : 1
     this.flipY = this.config.axles?.y?.flip ? -1 : 1

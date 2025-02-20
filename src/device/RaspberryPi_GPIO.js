@@ -1,13 +1,15 @@
 import rpio from 'rpio'
-import Device from './base.js'
+import base from './base.js'
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Raspberry Pi',
+  model: 'GPIO',
+  version: '2'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
-
-    this.manufacturer = 'Raspberry Pi'
-    this.model = 'GPIO'
-    this.version = '2'
+    super(info, config)
   }
 
   async connect () {

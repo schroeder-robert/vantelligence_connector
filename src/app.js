@@ -32,8 +32,10 @@ try {
         // import device class
         const module = await import(DEVICE_PATH + file)
 
+        if (module.hidden) continue
+
         // build devie class object
-        DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module.default
+        DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module
 
         log('✨', 'Device class found: ' + file)
       }
@@ -53,7 +55,7 @@ function startHttp () {
 
   websocket.on('connection', client => {
     const connection = {
-      client,
+      send: data => client.send(JSON.stringify(data)),
       topics: []
     }
 
@@ -63,8 +65,17 @@ function startHttp () {
     client.on('message', data => {
       data = JSON.parse(data)
 
-      if ('subscribe' in data && data.subscribe instanceof Array) {
-        connection.topics = data.subscribe
+      switch (data.request) {
+        case 'classes':
+          connection.send({
+            response: data.request,
+            classes: Object.entries(DEVICE_CLASSES).map(([k, v]) => ({ class: k, ...v.info }))
+          })
+
+          break
+
+        default:
+          connection.topics.push(data.request)
       }
 
       // console.log('received: %s', data)
@@ -210,7 +221,7 @@ async function processConfig (client, data) {
   }
 
   for (let config of data.devices) {
-    const deviceClass = DEVICE_CLASSES[config.class]
+    const deviceClass = DEVICE_CLASSES[config.class].device
 
     if (deviceClass) {
       const device = new deviceClass(config)
@@ -253,11 +264,7 @@ async function processConfig (client, data) {
 function publish (client, device, entity, support) {
   const topic = getEntityTopic(device, entity)
 
-  WS_CLIENTS.forEach(c => {
-    if (c.topics.includes(topic)) {
-      c.client.send(JSON.stringify({ topic, entity }))
-    }
-  })
+  WS_CLIENTS.filter(c => c.topics.includes(topic)).forEach(c => c.send({ response: topic, entity }))
 
   if (!PUBLISH_TOPICS.includes(topic)) {
     log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(BASE_TOPIC + '/' + topic) + '"', device)

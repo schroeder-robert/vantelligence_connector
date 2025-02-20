@@ -1,15 +1,18 @@
 import BME280 from 'bme280-sensor'
-import Device from './base.js'
+import base from './base.js'
 
 const ADDRESS = 0x76
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Bosch',
+  model: 'BME280',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Bosch'
-    this.model = 'BME280'
-    this.version = '1'
     this.sensor = null
   }
 

@@ -1,16 +1,18 @@
 import { pigpio } from 'pigpio-client'
-import Device from './base.js'
+import base from './base.js'
 
 const LIGHT_BRIGHTNESS_SCALE = 255
 let INSTANCES = {}
 
-export default class extends Device {
-  constructor (config) {
-    super(config)
+export const info = {
+  manufacturer: 'Raspberry Pi',
+  model: 'RemoteGPIO',
+  version: '2'
+}
 
-    this.manufacturer = 'Raspberry Pi'
-    this.model = 'RemoteGPIO'
-    this.version = '2'
+export const device = class extends base {
+  constructor (config) {
+    super(info, config)
   }
 
   async connect () {

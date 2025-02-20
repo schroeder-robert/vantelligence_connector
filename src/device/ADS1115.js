@@ -1,14 +1,17 @@
 import ADS1115 from 'ads1115'
-import Device from './base.js'
+import base from './base.js'
 import KalmanFilter from 'kalmanjs'
 
-export default class extends Device {
+export const info = {
+  manufacturer: 'Texas Instruments',
+  model: 'ADS1115',
+  version: '1'
+}
+
+export const device = class extends base {
   constructor (config) {
-    super(config)
+    super(info, config)
     
-    this.manufacturer = 'Texas Instruments'
-    this.model = 'ADS1115'
-    this.version = '1'
     this.sensor = null
   }
 
