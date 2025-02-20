@@ -247,3 +247,13 @@ devices:
     type: i2c
     bus: 1
     address: 0x69
+  axles:
+    x:
+      map: x
+      flip: true
+    y:
+      map: z
+      flip: true
+    z:
+      map: y
+      flip: false

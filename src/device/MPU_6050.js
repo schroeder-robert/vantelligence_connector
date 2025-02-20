@@ -11,6 +11,12 @@ export default class extends Device {
     this.model = 'MPU-6050'
     this.version = '1'
     this.sensor = null
+    this.flipX = this.config.axles?.x?.flip ? -1 : 1
+    this.flipY = this.config.axles?.y?.flip ? -1 : 1
+    this.flipZ = this.config.axles?.z?.flip ? -1 : 1
+    this.mapX = this.config.axles?.x?.map || 'x'
+    this.mapY = this.config.axles?.y?.map || 'y'
+    this.mapZ = this.config.axles?.z?.map || 'z'
     this.filters = {
       rotationX: new KalmanFilter({ R: 0.01, Q: 1 }),
       rotationY: new KalmanFilter({ R: 0.01, Q: 1 }),
@@ -45,33 +51,44 @@ export default class extends Device {
   }
 
   async getValues () {
-    const samples = 3
-    let data = null
-    let rotationX = 0
-    let rotationY = 0
+    const samples = 1
+
+    let accelRaw = {}
+    let accelNormalized = {}
     let accelX = 0
     let accelY = 0
     let accelZ = 0
+    let gyroRaw = {}
     let gyroX = 0
     let gyroY = 0
     let gyroZ = 0
+    let rotationRaw = {}
+    let rotationX = 0
+    let rotationY = 0
     let temp = 0
-
-    // console.log('-')
 
     try {        
       for (let i = 0; i < samples; ++i) {
-        data = this.sensor.readSync()
+        accelRaw = this.sensor.readAccelSync()
+        accelNormalized = {
+          x: accelRaw[this.mapX] * this.flipX,
+          y: accelRaw[this.mapY] * this.flipY,
+          z: accelRaw[this.mapZ] * this.flipZ
+        }
+        accelX = this.filters.accelX.filter(accelRaw[this.mapX] * this.flipX)
+        accelY = this.filters.accelY.filter(accelRaw[this.mapY] * this.flipY)
+        accelZ = this.filters.accelZ.filter(accelRaw[this.mapZ] * this.flipZ)
 
-        rotationX = this.filters.rotationX.filter(data.rotation.x)
-        rotationY = this.filters.rotationY.filter(data.rotation.y)
-        accelX = this.filters.accelX.filter(data.accel.x)
-        accelY = this.filters.accelY.filter(data.accel.y)
-        accelZ = this.filters.accelZ.filter(data.accel.z)
-        gyroX = this.filters.gyroX.filter(data.gyro.x)
-        gyroY = this.filters.gyroY.filter(data.gyro.y)
-        gyroZ = this.filters.gyroZ.filter(data.gyro.z)
-        temp = this.filters.temp.filter(data.temp)
+        gyroRaw = this.sensor.readGyroSync()
+        gyroX = this.filters.gyroX.filter(gyroRaw[this.mapX] * this.flipX)
+        gyroY = this.filters.gyroY.filter(gyroRaw[this.mapY] * this.flipY)
+        gyroZ = this.filters.gyroZ.filter(gyroRaw[this.mapZ] * this.flipZ)
+
+        rotationRaw = this.sensor.readRotationSync(accelNormalized)
+        rotationX = this.filters.rotationX.filter(rotationRaw.x)
+        rotationY = this.filters.rotationY.filter(rotationRaw.y)
+        
+        temp = this.filters.temp.filter(this.sensor.readTempSync())
 
         await this.wait(500 / samples)
       }
