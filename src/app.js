@@ -336,18 +336,18 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   }
 
   if (typeof entity.availability === 'string') {
-    config['availability_topic'] = getEntityTopic(device, entity) + '/availability'
+    config['availability_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/availability'
   }
 
   if (entity.states instanceof Object) {
     Object.keys(entity.states).forEach(state => {
-      config[state + '_topic'] = getEntityTopic(device, entity) + '/' + state
+      config[state + '_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + state
     })
   }
 
   if (entity.commands instanceof Array) {
     entity.commands.forEach(command => {
-      config[command + '_topic'] = getEntityTopic(device, entity) + '/' + command
+      config[command + '_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + command
     })
   }
 

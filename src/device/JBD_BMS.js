@@ -133,7 +133,7 @@ export const device = class extends base {
 
     for (let i = 0; i < Math.min(count, 32); ++i) {
       this.emitEntity({
-        name: ' Zelle ' + (i + 1) + ' Spannung',
+        name: 'Zelle ' + (i + 1) + ' Spannung',
         key: 'cell_' + i + '_voltage',
         category: this.CATEGORY.diagnostic,
         class: this.CLASS.voltage,
