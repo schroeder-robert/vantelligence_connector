@@ -40,7 +40,6 @@ try {
 
       connectMqtt()
       startHttp()
-      startWebsocket()
     }
   })
 } catch (error) {
@@ -50,6 +49,31 @@ try {
 function startHttp () {
   const host = 'localhost'
   const port = 8066
+  const websocket = new WebSocketServer({ noServer: true })
+
+  websocket.on('connection', client => {
+    console.log('CONN')
+    const connection = {
+      client,
+      topics: []
+    }
+
+    WS_CLIENTS.push(connection)
+
+    client.on('error', console.error)
+    client.on('message', data => {
+      data = JSON.parse(data)
+
+      if ('subscribe' in data && data.subscribe instanceof Array) {
+        connection.topics = data.subscribe
+      }
+
+      console.log('received: %s', data)
+    })
+
+    //client.send('welcome, there are others: ' + WS_CLIENTS.length)
+  })
+
   const server = http.createServer((request, response) => {
     const types = {
       '.html': 'text/html',
@@ -101,34 +125,16 @@ function startHttp () {
 
   })
 
+  server.on('upgrade', (request, socket, head) => {
+    if (request.headers.upgrade === 'websocket') {
+      websocket.handleUpgrade(request, socket, head, ws => websocket.emit('connection', ws, request))
+    } else {
+      socket.destroy()
+    }
+  })
+
   server.listen(port, () => {
     console.log(`Server is running on http://${host}:${port}`)
-  })
-}
-
-function startWebsocket () {
-  const server = new WebSocketServer({ port: process.env.WEBSOCKET_PORT || 8067 })
-
-  server.on('connection', client => {
-    const connection = {
-      client,
-      topics: []
-    }
-
-    WS_CLIENTS.push(connection)
-
-    client.on('error', console.error)
-    client.on('message', data => {
-      data = JSON.parse(data)
-
-      if ('subscribe' in data && data.subscribe instanceof Array) {
-        connection.topics = data.subscribe
-      }
-
-      console.log('received: %s', data)
-    })
-
-    //client.send('welcome, there are others: ' + WS_CLIENTS.length)
   })
 }
 

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Inclinometer</title>
+    <script src="main.js"></script>
+    <script>
+
+    init(() => {
+      const style = document.querySelector(':root').style
+      const labelFront = document.querySelector('.axels div:nth-child(1) span')
+      const labelRear = document.querySelector('.axels div:nth-child(2) span')
+      const labelSide = document.querySelector('.axels div:nth-child(3) span')
+
+      subscribe('connector/device/bewegungssensor/tilt_x', data => {
+        style.setProperty('--tilt-x-mirror', data.entity.states.state * -1 + 'deg')
+        style.setProperty('--tilt-x', data.entity.states.state + 'deg')
+
+        labelFront.innerHTML = data.entity.states.state + '&deg;'
+        labelRear.innerHTML = (data.entity.states.state * -1) + '&deg;'
+      })
+
+      subscribe('connector/device/bewegungssensor/tilt_y', data => {
+        style.setProperty('--tilt-y', data.entity.states.state + 'deg')
+        labelSide.innerHTML = data.entity.states.state + '&deg;'
+      })
+    })
+
+    </script>
+    <style>
+
+      body {
+        font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100dvh;
+        margin: 0;
+        background-color: black;
+      }
+
+      .axels {
+        display: flex;
+        justify-content: space-between;
+        width: 100%;
+        padding: 5%;
+        overflow: hidden;
+      }
+
+      .axels > div {
+        width: 30%;
+        position: relative;
+      }
+
+      .axels > div > div {
+        border: 0.5vw solid #999;
+        border-radius: 50%;
+        aspect-ratio: 1 / 1;
+        transition: transform 1000ms;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(0deg, rgba(101,175,209,1) 50%, rgba(53,136,235,1) 100%);
+      }
+
+      .axels > div > div::before {
+        position: absolute;
+        top: 0;
+        bottom: 23%;
+        left: 0;
+        right: 0;
+        background-size: 50%;
+        background-repeat: no-repeat;
+        background-position: center bottom;
+        content: '';
+      }
+
+      .axels > div > div::after {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background-color: #746853;
+        content: '';
+        height: 23%;
+        border-top: 1px solid #5e5545;
+      }
+
+      .axels > div:nth-child(1) > div {
+        transform: rotate(var(--tilt-x));
+      }
+
+      .axels > div:nth-child(1) > div::before {
+        background-image: url(images/front_henry.png);
+      }
+
+      .axels > div:nth-child(2) > div {
+        transform: rotate(var(--tilt-x-mirror));
+      }
+
+      .axels > div:nth-child(2) > div::before {
+        background-image: url(images/heck_henry.png);
+      }
+
+      .axels > div:nth-child(3) > div {
+        transform: rotate(var(--tilt-y));
+      }
+
+      .axels > div:nth-child(3) > div::before {
+        bottom: 33%;
+        background-image: url(images/seite_henry.png);
+        background-size: 75%;
+      }
+
+      .axels > div:nth-child(3) > div::after {
+        height: 33%;
+      }
+
+      .axels > div > span {
+        box-sizing: border-box;
+        background-color: #444;
+        color: white;
+        text-align: right;
+        width: 8vw;
+        height: 8vw;
+        line-height: 8vw;
+        font-size: 4vw;
+        position: absolute;
+        border-radius: 50%;
+        left: 50%;
+        bottom: 0;
+        transform: translate(-50%, 30%);
+        padding-right: 3%;
+      }
+
+    </style>
+  </head>
+  <body>
+    <div class="axels">
+      <div><div></div><span></span></div>
+      <div><div></div><span></span></div>
+      <div><div></div><span></span></div>
+    </div>
+  </body>
+</html>
