@@ -11,52 +11,52 @@ devices:
 #   id: bluetooth
 #   class: MadeByRob_Bluetooth
 
-# - name: PWM-Controller
-#   id: pwmcontroller
-#   class: PCA9685
-#   connection:
-#     type: i2c
-#     bus: 1
-#   channels:
-#   - name: Licht Schiebetür links
-#     id: 0
-#     type: light
-#   - name: Licht Laderaum
-#     id: 1
-#     type: light
-#   - name: Licht Schiebetür rechts
-#     id: 2
-#     type: light
-#   - name: Licht Dachluke
-#     id: 3
-#     type: light
-#   - name: Licht5
-#     id: 4
-#     type: light
-#   - name: Schubladenverrieglung
-#     id: 14
-#     min: 400
-#     max: 2600
-#     scale: 180
-#   - name: Kühlschrankverrieglung
-#     id: 15
-#     min: 400
-#     max: 2600
-#     scale: 180
+- name: PWM-Controller
+  id: pwmcontroller
+  class: PCA9685
+  connection:
+    type: i2c
+    bus: 1
+  channels:
+  - name: Licht Schiebetür links
+    id: 0
+    type: light
+  - name: Licht Laderaum
+    id: 1
+    type: light
+  - name: Licht Schiebetür rechts
+    id: 2
+    type: light
+  - name: Licht Dachluke
+    id: 3
+    type: light
+  - name: Licht5
+    id: 4
+    type: light
+  - name: Schubladenverrieglung
+    id: 14
+    min: 400
+    max: 2600
+    scale: 180
+  - name: Kühlschrankverrieglung
+    id: 15
+    min: 400
+    max: 2600
+    scale: 180
 
-# - name: Luftsensor
-#   id: luftsensor
-#   class: BME280
-#   connection:
-#     type: i2c
-#     bus: 1
+- name: Luftsensor
+  id: luftsensor
+  class: BME280
+  connection:
+    type: i2c
+    bus: 1
 
-# - name: Helligkeitssensor
-#   id: helligkeitssensor
-#   class: BH1750
-#   connection:
-#     type: i2c
-#     bus: 1
+- name: Helligkeitssensor
+  id: helligkeitssensor
+  class: BH1750
+  connection:
+    type: i2c
+    bus: 1
 
 # - name: Wechselrichter
 #   id: wechselrichter
@@ -67,31 +67,31 @@ devices:
 #     mode_pin: 19
 #     data_pin: 26
 
-# - name: Lichtsteuerung außen
-#   id: lichtsteuerung_aussen
-#   class: MadeByRob_Arduino
-#   connection:
-#     type: i2c
-#     bus: 1
-#   lights:
-#   - name: 'Arbeitslicht rechts'
-#   - name: 'Fernlicht links'
-#   - name: 'Arbeitslicht links'
-#   - name: 'Fernlicht rechts'
-#   - name: 'Rücklicht links'
-#   - name: 'Blinker vorne links'
-#   - name: 'Blinker vorne rechts'
-#     brightness: true
-#   - name: 'Positionslicht rechts'
-#     brightness: true
-#   - name: 'Blinker hinten links'
-#     brightness: true
-#   - name: 'Positionslicht links'
-#     brightness: true
-#   - name: 'Blinker hinten rechts'
-#     brightness: true
-#   - name: 'Rücklicht rechts'
-#     brightness: true
+- name: Lichtsteuerung außen
+  id: lichtsteuerung_aussen
+  class: MadeByRob_Arduino
+  connection:
+    type: i2c
+    bus: 1
+  lights:
+  - name: 'Arbeitslicht rechts'
+  - name: 'Fernlicht links'
+  - name: 'Arbeitslicht links'
+  - name: 'Fernlicht rechts'
+  - name: 'Rücklicht links'
+  - name: 'Blinker vorne links'
+  - name: 'Blinker vorne rechts'
+    brightness: true
+  - name: 'Positionslicht rechts'
+    brightness: true
+  - name: 'Blinker hinten links'
+    brightness: true
+  - name: 'Positionslicht links'
+    brightness: true
+  - name: 'Blinker hinten rechts'
+    brightness: true
+  - name: 'Rücklicht rechts'
+    brightness: true
 
 - name: Akku
   id: akku

@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Vantelligence Connector
-version: 1.0.43
+version: 1.0.44
 slug: vantelligence_connector
 description: MQTT Connector for devices in your camper.
 url: "https://github.com/home-assistant/addons-example/tree/main/example"
@@ -22,6 +22,7 @@ ports_description:
 services:
   - mqtt:need
 map:
+  - addon_config
   - share:rw
 full_access: true
 #image: "ghcr.io/home-assistant/{arch}-addon-example"
