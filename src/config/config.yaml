@@ -5,8 +5,8 @@ devices:
 #   id: bluetooth
 #   class: MadeByRob_Bluetooth
 
-- name: HS-Can
-  id: hscan
+- name: CAN-Bus
+  id: canbus
   class: MadeByRob_Socketcan
   connection:
     bus: can0

@@ -4,9 +4,11 @@
 # s6-overlay docs: https://github.com/just-containers/s6-overlay
 # ==============================================================================
 
-export MQTT_HOST=$(bashio::services mqtt "host")
-export MQTT_USERNAME=$(bashio::services mqtt "username")
-export MQTT_PASSWORD=$(bashio::services mqtt "password")
+export CONNECTOR_MQTT_HOST=$(bashio::services mqtt 'host')
+export CONNECTOR_MQTT_PORT=$(bashio::services mqtt 'port')
+export CONNECTOR_MQTT_USERNAME=$(bashio::services mqtt 'username')
+export CONNECTOR_MQTT_PASSWORD=$(bashio::services mqtt 'password')
+export CONNECTOR_CONFIG_FILE=/config/$(bashio::config 'config_file')
 
 ## Run your program
 exec /usr/bin/connector

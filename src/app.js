@@ -8,6 +8,12 @@ import url from 'url'
 import path from 'path'
 import { WebSocketServer } from 'ws'
 
+const MQTT_HOST = process.env.CONNECTOR_MQTT_HOST || 'localhost'
+const MQTT_PORT = process.env.CONNECTOR_MQTT_PORT || 1883
+const MQTT_USERNAME = process.env.CONNECTOR_MQTT_USERNAME
+const MQTT_PASSWORD = process.env.CONNECTOR_MQTT_PASSWORD
+const CONFIG_FILE = process.env.CONNECTOR_CONFIG_FILE || './config/config.yaml'
+
 const BASE_TOPIC = 'connector'
 const DEVICE_TOPIC = 'device'
 const CONFIG_TOPIC = 'config'
@@ -15,7 +21,6 @@ const DEVICE_PATH = './device/'
 const DEVICE_CLASSES = {}
 const DEVICE_INSTANCES = []
 const HA_BASE_TOPIC = 'homeassistant'
-const CONFIG_FILE = './config/config.yaml'
 
 let HA_DISCOVERY = []
 let SUBSCRIBED_TOPICS = {}
@@ -149,16 +154,12 @@ function startHttp () {
 }
 
 function connectMqtt () {
-  const args = Object.fromEntries(process.argv.slice(2).map(arg => arg.split('=')))
-  const host = args.host || process.env.MQTT_HOST || 'localhost'
-  const options = {
-    port: args.port || process.env.MQTT_PORT || 1883,
-    username: args.username || process.env.MQTT_USERNAME,
-    password: args.password || process.env.MQTT_PASSWORD
-  }
-
   // create client
-  const client = mqtt.connect('mqtt://' + host, options)
+  const client = mqtt.connect('mqtt://' + MQTT_HOST, {
+    port: MQTT_PORT,
+    username: MQTT_USERNAME,
+    password: MQTT_PASSWORD
+  })
   
   // connect to broker
   client.on('connect', () => {
@@ -175,7 +176,7 @@ function connectMqtt () {
 
   // error handling
   client.on('error', error => {
-    log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(host + ':' + options.port) + '": ' + chalk.red(error.code))
+    log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '": ' + chalk.red(error.code))
   })
 
   // react to messages of subscribed topics

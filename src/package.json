@@ -16,7 +16,7 @@
     "i2c-io-expanders": "^1.0.1",
     "i2c-mpu6050": "^2.3.0",
     "kalmanjs": "^1.1.0",
-    "mqtt": "^4.3.7",
+    "mqtt": "^5.10.3",
     "nodemon": "^2.0.15",
     "oled-font-5x7": "^1.0.3",
     "oled-i2c-bus": "^1.0.12",
