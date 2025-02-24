@@ -71,6 +71,14 @@ function startHttp () {
       data = JSON.parse(data)
 
       switch (data.request) {
+        case 'config_file':
+          connection.send({
+            response: data.request,
+            config_file: CONFIG_FILE
+          })
+
+          break
+        
         case 'classes':
           connection.send({
             response: data.request,

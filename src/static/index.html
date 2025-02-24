@@ -6,12 +6,14 @@
     <script>
 
     init(() => {
-      on('classes', data => {
-        console.log(data)
+      on('config_file', data => {
+        document.querySelector('#config_file').innerHTML = data.config_file
+      })
 
+      on('classes', data => {
         data.classes.forEach(c => {
           const el = document.createElement('div')
-console.log(c.class)
+
           el.innerHTML = c.class
 
           document.querySelector('#classes').appendChild(el)
@@ -50,9 +52,10 @@ console.log(c.class)
     </style>
   </head>
   <body>
-    <div>
+    <div id="widgets">
       <a href="inclinometer.html">Inclinometer</a>
     </div>
+    <div id="config_file"></div>
     <div id="classes"></div>
   </body>
 </html>
