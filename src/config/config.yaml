@@ -1,16 +1,15 @@
 support:
   - homeassistant
 devices:
-# - name: HS-Can
-#   id: hscan
-#   class: MadeByRob_Socketcan
-#   connection:
-#     bus: can0
-
 # - name: Bluetooth
 #   id: bluetooth
 #   class: MadeByRob_Bluetooth
 
+- name: HS-Can
+  id: hscan
+  class: MadeByRob_Socketcan
+  connection:
+    bus: can0
 - name: PWM-Controller
   id: pwmcontroller
   class: PCA9685
