@@ -165,7 +165,7 @@ function connectMqtt () {
   client.on('connect', () => {
     // check if local config exists
     if (fs.existsSync(CONFIG_FILE)) {
-      log('✨', 'Local config found. Publishing...')
+      log('✨', 'Local config found at "' + CONFIG_FILE + '". Publishing...')
 
       client.publish(BASE_TOPIC + '/' + CONFIG_TOPIC, fs.readFileSync(CONFIG_FILE), { retain: true })
     }
