@@ -15,7 +15,9 @@ export const device = class extends base {
   async connect () {
     const { pins } = this.config
 
-    rpio.init()
+    rpio.init({
+      gpiomem: false
+    })
 
     pins.forEach(pin => {
       const entity = {
