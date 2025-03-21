@@ -29,7 +29,7 @@ export const device = class extends base {
     this.poll(interval || 10000, async () => {
       for (let i in values) {
         const value = values[i]
-        const range = value.max - value.min
+        const zero = Math.max(value.min, Math.min(value.max, value.zero || value.min))
 
         try {
           let raw = await this.sensor.measure(value.measure)
@@ -38,14 +38,16 @@ export const device = class extends base {
             raw = filters[i].filter(raw).toFixed()
           }
 
-          const result = Math.max(value.min, Math.min(value.max, raw > 32768 ? raw - 65536 : raw)) - value.min
+          const positive = raw >= zero
+          const range = positive ? value.max - zero : zero - value.min
+          const result = (Math.max(value.min, Math.min(value.max, raw)) - zero) / range
 
           this.emitEntity({
             name: value.name,
             key: this.convertNameToKey(value.name),
             unit: value.unit || '%',
             states: {
-              state: Math.round(result / range * (value.scale || 100))
+              state: Math.round(result * (value.scale || 100))
             }
           })
         } catch (error) {
