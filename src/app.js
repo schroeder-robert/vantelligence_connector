@@ -184,7 +184,7 @@ function connectMqtt () {
 
   // error handling
   client.on('error', error => {
-    log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '": ' + chalk.red(error.code))
+    log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + chalk.red(error.code))
   })
 
   // react to messages of subscribed topics
