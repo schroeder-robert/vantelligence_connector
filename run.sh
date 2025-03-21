@@ -1,7 +1,7 @@
 #!/bin/sh
 
-export MQTT_USERNAME=test
-export MQTT_PASSWORD=test
+export CONNECTOR_MQTT_USERNAME=test
+export CONNECTOR_MQTT_PASSWORD=test
 
 cd src
 nodemon -e js,yaml
