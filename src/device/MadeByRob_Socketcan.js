@@ -183,7 +183,7 @@ export const device = class extends base {
         key: 'gps',
         icon: 'mdi:map-marker',
         states: {
-          state: 'home',
+          // state: 'home',
           json_attributes: JSON.stringify({
             latitude,
             longitude,
