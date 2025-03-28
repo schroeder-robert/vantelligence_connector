@@ -41,15 +41,20 @@ export const device = class extends base {
           const positive = raw >= zero
           const range = positive ? value.max - zero : zero - value.min
           const result = (Math.max(value.min, Math.min(value.max, raw)) - zero) / range
-
-          this.emitEntity({
+          const entity = {
             name: value.name,
             key: this.convertNameToKey(value.name),
             unit: value.unit || '%',
             states: {
               state: Math.round(result * (value.scale || 100))
             }
-          })
+          }
+
+          if ('class' in value) {
+            entity.class = value.class
+          }
+
+          this.emitEntity(entity)
         } catch (error) {
           this.error(error.message)
         }
