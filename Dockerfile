@@ -11,6 +11,7 @@ FROM $BUILD_FROM
 RUN \
   apk add --no-cache \
     linux-headers \
+    alsa-plugins-pulse \
     g++ \
     make \
     python3 \
