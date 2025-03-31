@@ -50,8 +50,8 @@ export const device = class extends base {
             }
           }
 
-          if ('class' in value) {
-            entity.class = value.class
+          if ('class' in value && value.class in this.CLASS) {
+            entity.class = this.CLASS[value.class]
           }
 
           this.emitEntity(entity)
