@@ -17,11 +17,15 @@ export const device = class extends base {
   }
 
   async connect () {
-    this.client = new PulseAudio();
+    try {
+      this.client = new PulseAudio(undefined, undefined, '/run/audio/pulse.sock')
 
-    await this.client.connect()
-    
-    this.poll(5000, () => this.getSinks())
+      await this.client.connect()
+      
+      this.poll(5000, () => this.getSinks())
+    } catch (error) {
+      this.error(error)
+    }
   }
 
   async getSinks () {
