@@ -386,6 +386,7 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
     config.min = entity.min
     config.max = entity.max
     config.step = entity.step
+    config.mode = entity.mode
     config.unit_of_measurement = entity.unit
   }
   
