@@ -62,6 +62,7 @@ export const device = class extends base {
       key: 'volume_percent',
       min: 0,
       max: 100,
+      mode: 'slider',
       step: 1,
       commands: ['command'],
       states: { state }
