@@ -6,51 +6,381 @@ import YAML from 'yaml'
 import http from 'http'
 import url from 'url'
 import path from 'path'
+import { entityCategories, entityClasses, entityUnits, stateValues } from './maps.js'
 import { WebSocketServer } from 'ws'
+import { SerialPort } from 'serialport'
+import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 
 const MQTT_HOST = process.env.CONNECTOR_MQTT_HOST || 'localhost'
 const MQTT_PORT = process.env.CONNECTOR_MQTT_PORT || 1883
-const MQTT_USERNAME = process.env.CONNECTOR_MQTT_USERNAME
-const MQTT_PASSWORD = process.env.CONNECTOR_MQTT_PASSWORD
+const MQTT_USERNAME = process.env.CONNECTOR_MQTT_USERNAME || 'test'
+const MQTT_PASSWORD = process.env.CONNECTOR_MQTT_PASSWORD || 'test'
 const CONFIG_FILE = process.env.CONNECTOR_CONFIG_FILE || './config/config.yaml'
+const HA_SUPPORT = true
 
 const BASE_TOPIC = 'connector'
 const DEVICE_TOPIC = 'device'
-const CONFIG_TOPIC = 'config'
-const DEVICE_PATH = './device/'
 const DEVICE_CLASSES = {}
-const DEVICE_INSTANCES = []
 const HA_BASE_TOPIC = 'homeassistant'
 
-let HA_DISCOVERY = []
-let SUBSCRIBED_TOPICS = {}
-let PUBLISH_TOPICS = []
+const modulePath = './modules/'
+const moduleInstances = {}
+const valueStore = {}
+const callbackStore = {}
+
 let WS_CLIENTS = []
+let mqttClient
+let mqttConfig = []
+let fullConfig
 
 try {
-  // get device class list
-  fs.readdir(DEVICE_PATH, async (error, files) => {
-    if (error) {
-      log('⚠️', error)
-    } else {
-      for (let file of files) {
-        // import device class
-        const module = await import(DEVICE_PATH + file)
+  if (!fs.existsSync(CONFIG_FILE)) throw new Error('No config file found!')
 
-        if (module.hidden) continue
+  const startups = []
+  const base = {
+    id: 'connector',
+    name: 'connector',
+    type: 'connector'
+  } 
 
-        // build devie class object
-        DEVICE_CLASSES[String(file).slice(0, file.lastIndexOf('.'))] = module
+  fullConfig = YAML.parse(String(fs.readFileSync(CONFIG_FILE)))
+  mqttClient = connectMqtt(MQTT_HOST, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD)
+  // startHttp()
 
-        log('✨', 'Device class found: ' + file)
-      }
+  // mqttConfig = await (() => new Promise(resolve => {
+  //   const timeout = setTimeout(() => {
+  //     throw new Error('Config timeout')
+  //   }, 10000)
+    
+  //   subscribe(BASE_TOPIC, m => {
+  //     clearTimeout(timeout)
+  //     resolve(m)
+  //   })
+  // }))()
 
-      connectMqtt()
-      startHttp()
+  for (let config of [].concat(fullConfig || [])) {
+  // for (let config of [base].concat(mqttConfig instanceof Array ? mqttConfig : [])) {
+    const path = modulePath + config.type + '.js'
+    const logPrefix = '[ ' + config.id + ' ]'
+
+    try {
+      const module = await import(path)
+
+      if (typeof module.default !== 'function') throw new Error('Not a function!')
+
+      startups.push(init(logPrefix, module, config))
+    } catch (error) {
+      logError(logPrefix, 'Could not load module "' + path + '":', error)
     }
+  }
+
+  Promise.all(startups).then((values) => {
+    log('Module initialization done!')
+
+    console.table(values)
   })
 } catch (error) {
-  console.log('ERRRRRRRR', error)
+  logError('INIT ERROR', error)
+}
+
+function updateConfig (data) {
+  publish(BASE_TOPIC, data)
+  log('UC', data)
+}
+
+async function init (logPrefix, module, config) {
+  try {
+    await module.default({
+      restart: function (delay) { return setTimeout(() => { init(logPrefix, module, config) }, delay || 3000) },
+      prop: function () { return prop(config, ...arguments) },
+      device: function () { return device(config, ...arguments) },
+      log: function () { return log(logPrefix, ...arguments) },
+      logError: function () { return logError(logPrefix, ...arguments) },
+      on: function () { return on(config, ...arguments) },
+      poll: function () { return poll(logPrefix, ...arguments) },
+      wait,
+      convertKeyToMethod,
+      convertNameToKey,
+      createSerialConnection: function () { return createSerialConnection(logPrefix, ...arguments) },
+      modulePath,
+      mqttConfig,
+      updateConfig,
+      stateValues,
+      entityClasses,
+      entityCategories,
+      entityUnits
+    })
+
+    log(logPrefix, 'Created ' + config.type + ' instance:', config.name)
+  } catch (error) {
+    logError(logPrefix, 'Module init error:', error)
+  }
+
+  return { type: config.type, id: config.id, name: config.name }
+}
+
+function prop (config, key, def) {
+  return key ? (key in config ? config[key] : def) : config
+}
+
+function device (config, manufacturer, model, version) {
+  const data = {
+    topic: topic(config.id),
+    id: config.id,
+    name: config.name,
+    manufacturer,
+    model,
+    version,
+    entities: {}
+  }
+
+  publish(data.topic, data)
+
+  return {
+    sensor: function () { return entity(data, 'sensor', ...arguments) },
+    binarySensor: function () { return entity(data, 'binary_sensor', ...arguments) },
+    switch: function () { return entity(data, 'switch', ...arguments) },
+    button: function () { return entity(data, 'button', ...arguments) },
+    select: function () { return entity(data, 'select', ...arguments) },
+    text: function () { return entity(data, 'text', ...arguments) },
+    number: function () { return entity(data, 'number', ...arguments) },
+    light: function () { return entity(data, 'light', ...arguments) },
+    tracker: function () { return entity(data, 'tracker', ...arguments) },
+    entity: function () { return entity(data, ...arguments) }
+  }
+}
+
+function entity (device, type, id, name, attributes) {
+  const data = {
+    topic: topic(device.id, id),
+    type,
+    id,
+    name: name || id,
+    states: {
+      state: topic(device.id, id, 'state')
+    }
+  }
+
+  switch (type) {
+    case 'sensor':
+      data.class = attributes?.class || entityClasses[id]
+      data.unit = {
+        [entityClasses.temperature]: entityUnits.celsius,
+        [entityClasses.illuminance]: entityUnits.lx,
+        [entityClasses.voltage]: entityUnits.volt,
+        [entityClasses.current]: entityUnits.ampere
+      }[data.class]
+
+      break
+    
+    case 'switch':
+    case 'button':
+    case 'select':
+    case 'text':
+    case 'number':
+    case 'light':
+      data.commands = {
+        command: topic(device.id, id, 'command')
+      }
+
+      break
+  }
+
+  Object.assign(data, attributes)
+
+  device.entities[id] = data
+
+  publish(data.topic, data)
+  publishHomeAssistantDiscovery(device, data)
+
+  return {
+    availability: function () { return availability(device, data, ...arguments) },
+    state: function () { return state(device, data, 'state', ...arguments) },
+    stateById: function () { return state(device, data, ...arguments) },
+    command: function () { return command(device, data, 'command', ...arguments) },
+    commandById: function () { return command(device, data, ...arguments) },
+    update: function () { return update(device, data) },
+    get: function () { return get(data, ...arguments) },
+    set: function () { return set(data, ...arguments) }
+  }
+}
+
+function get (entity, attribute) {
+  return entity[attribute]
+}
+
+function set (entity, attribute, value) {
+  entity[attribute] = value
+}
+
+function update (device, entity) {
+   publishHomeAssistantDiscovery(device, entity)
+}
+
+function availability (device, entity, value) {
+  if (value === undefined) return entity.states[id]
+  
+  if (!('availability' in entity)) {
+    entity.availability = topic(device.id, entity.id, 'availability')
+
+    update(device, entity)
+  }
+
+  publish(entity.availability, value)
+}
+
+function state (device, entity, id, value) {
+  const current = valueStore[entity.states[id]]
+
+  if (value === undefined) return current
+  if (value !== current) publish(entity.states[id], value)
+
+  return value
+}
+
+function command (device, entity, id, callback) {
+  if (callback === undefined) return callbackStore[entity.commands[id]]
+
+  subscribe(entity.commands[id], callback)
+}
+
+function topic () {
+  return [BASE_TOPIC, DEVICE_TOPIC, ...Array.from(arguments)].join('/')
+}
+
+function on (config, key, callback) {
+  if (!(key in config.subscribe)) return
+
+  subscribe(config.subscribe[key], callback)
+}
+
+async function poll (logPrefix, time, method, interval) {
+  let id
+
+  if (typeof method === 'function') {
+    let cycle = 0
+    const call = async () => {
+      try {
+        await method(cycle++)
+      } catch (e) {
+        logError(logPrefix, 'Poll /', e)
+      }
+
+      if (!interval) {
+        id = setTimeout(call, time)
+      }
+    }
+
+    if (!!interval) {
+      id = setInterval(call, time)
+    }
+    
+    call()
+  }
+
+  return {
+    stop () {
+      if (id) {
+        !interval ? clearTimeout(id) : clearInterval(id)
+      }
+    }
+  }
+}
+
+async function wait (time) {
+  return new Promise(resolve => setTimeout(resolve, time))
+}
+
+function convertKeyToMethod (value) {
+  return String(value).replace(/((^|[_])[a-z])/ig, match => match.toUpperCase().replace('_', ''))
+}
+
+function convertNameToKey (value) {
+  return String(value).toLowerCase().replace(/[ ]/g, '_')
+}
+
+function createSerialConnection (logPrefix, options, parser, callback) {
+  let port = null
+  let pipe = null
+
+  const connect = () => {
+    port = new SerialPort(Object.assign({ autoOpen: false }, options))
+    port.open(error => {
+      if (error) {
+        logError(logPrefix, error.message)
+        log(logPrefix, 'Retrying in 10s')
+        
+        setTimeout(connect, 10000)
+      } else {
+        log(logPrefix, 'Serial connection successful')
+      }
+    })
+    port.on('error', error => logError(error.message))
+    port.on('close', () => {
+      logError(logPrefix, 'Lost connection!')
+      
+      connect()
+    })
+
+    pipe = port.pipe(parser || new InterByteTimeoutParser({ interval: 100 }))
+    
+    if (typeof callback === 'function') {
+      pipe.on('data', callback)
+    }
+  }
+
+  connect()
+
+  return function (bytes) {
+    return new Promise((resolve, reject) => {
+
+      try {
+        let timeout = setTimeout(() => reject('request timeout'), 3000)
+
+        pipe.once('data', data => {
+          clearTimeout(timeout)
+          resolve(data)
+        })
+
+        port.write(Buffer.from(bytes), error => {
+          if (error) {
+            logError(logPrefix, error)
+  
+            reject('error')
+          } else {
+            clearTimeout(timeout)
+            timeout = setTimeout(() => reject('response timeout'), 3000)
+          }
+        })
+      } catch (e) {
+        console.log(e)
+
+        reject('catch')
+      }
+    })
+  }
+}
+
+function log () {
+  const args = Array.from(arguments)
+  const types = {
+    info: '\x1b[37m%s\x1b[0m',
+    error: '\x1b[31m%s\x1b[0m',
+    warn: '\x1b[33m%s\x1b[0m'
+  }
+
+  let type = 'info'
+
+  if (args[0] in types) {
+    type = args[0]
+    args.shift()
+  }
+
+  console.log(types[type], '[' + (new Date()).toISOString() + ']', '[ ' + type.toUpperCase() + ' ]', ...args)
+}
+
+function logError () {
+  log('error', ...arguments)
 }
 
 function startHttp () {
@@ -161,171 +491,46 @@ function startHttp () {
   })
 }
 
-function connectMqtt () {
-  // create client
-  const client = mqtt.connect('mqtt://' + MQTT_HOST, {
-    port: MQTT_PORT,
-    username: MQTT_USERNAME,
-    password: MQTT_PASSWORD
-  })
-  
-  // connect to broker
-  client.on('connect', () => {
-    // check if local config exists
-    if (fs.existsSync(CONFIG_FILE)) {
-      log('✨', 'Local config found at "' + CONFIG_FILE + '". Publishing...')
+function connectMqtt (host, port, username, password) {
+  const client = mqtt.connect('mqtt://' + host, { port, username, password })
 
-      client.publish(BASE_TOPIC + '/' + CONFIG_TOPIC, fs.readFileSync(CONFIG_FILE), { retain: true })
-    }
-
-    // subscribe to config topic
-    client.subscribe(BASE_TOPIC + '/' + CONFIG_TOPIC)
-  })
-
-  // error handling
+  client.on('message', react)
   client.on('error', error => {
-    log('⚠️', 'Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + chalk.red(error.code))
+    logError('Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + error.message)
   })
 
-  // react to messages of subscribed topics
-  client.on('message', (topic, message) => {
-    const parts = topic.split('/')
+  return client
+}
 
-    topic = topic.slice(BASE_TOPIC.length + 1)
+function publish (topic, value) {
+  // log('Publishing to "' + topic + '":', value)
+  mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
 
-    if (parts[0] === BASE_TOPIC) {
-      if (parts[1] === CONFIG_TOPIC) {
-        log('✨', 'New config discovered. Processing...')
+  valueStore[topic] = value
+}
 
-        processConfig(client, YAML.parse(message.toString()))
-      } else if (SUBSCRIBED_TOPICS[topic] instanceof Object) {
-        Object.keys(SUBSCRIBED_TOPICS[topic]).forEach(key => SUBSCRIBED_TOPICS[topic][key](parts[parts.length - 1], message.toString()))
-      }
-    } else if (parts[0] === HA_BASE_TOPIC) {
-      if (parts[1] === 'status' && parts.length === 2 && message.toString() === 'online') {
-        HA_DISCOVERY = []
-      }
-    }
+function subscribe (topic, callback) {
+  log('Subscribing to "' + topic + '"')
+  mqttClient.subscribe(topic)
+
+  if (!(topic in callbackStore)) callbackStore[topic] = []
+
+  callbackStore[topic].push(callback)
+}
+
+function react (topic, message) {
+  if (!(topic in callbackStore)) return
+
+  callbackStore[topic].forEach(callback => {
+    if (typeof callback === 'function') callback(String(message))
   })
 }
 
-async function processConfig (client, data) {
-  if (data.support.includes('homeassistant')) {
-    client.subscribe(HA_BASE_TOPIC + '/status')
-  }
+function publishHomeAssistantDiscovery (device, entity) {
+  if (!HA_SUPPORT) return
 
-  Object.values(DEVICE_INSTANCES).forEach(device => {
-    device.disconnect()
-  })
-
-  client.unsubscribe(Object.keys(SUBSCRIBED_TOPICS))
-
-  SUBSCRIBED_TOPICS = {}
-  PUBLISH_TOPICS = []
-
-  if (data.devices?.length < 1) {
-    log('✨', 'No devices found')
-
-    return
-  }
-
-  for (let config of data.devices) {
-    const deviceClass = DEVICE_CLASSES[config.class].device
-
-    if (deviceClass) {
-      const device = new deviceClass(config)
-      let result = null
-
-      device.onMessage((icon, message) => log(icon, message, device))
-      device.onEntityUpdate(entity => {
-        publish(client, device, entity, data.support)
-
-        if (entity.commands instanceof Array) {
-          entity.commands.forEach(command => subscribe(client, getEntityTopic(device, entity) + '/' + command, device, entity.key))
-        }
-      })
-
-      try {
-        result = await device.connect()
-      } catch (error) {
-        result = error
-      }
-
-      const message = 'connects by ' + chalk.yellow(device.manufacturer + ' ' + device.model) + ': '
-
-      if (result === undefined || result === null) {
-        log('⚡', message + chalk.black.bgGreen(' SUCCESS '), device)
-      } else {
-        log('⚡', message + chalk.black.bgRed(' FAIL ') + ' ' + result, device)
-        
-        if (config.subscribe instanceof Object) {
-          Object.entries(config.subscribe).forEach(([key, topic]) => subscribe(client, topic, device, key))
-        }
-
-        DEVICE_INSTANCES[device.id] = device
-      }
-    } else {
-      log('⚠️', 'Unknown device class in config: ' + config.class)
-    }
-  }
-}
-
-function publish (client, device, entity, support) {
-  const topic = getEntityTopic(device, entity)
-
-  WS_CLIENTS.filter(c => c.topics.includes(topic)).forEach(c => c.send({ response: topic, entity }))
-
-  if (!PUBLISH_TOPICS.includes(topic)) {
-    log('📣', 'published entity "' + chalk.cyan(entity.name) + '" to topic "' + chalk.yellow(BASE_TOPIC + '/' + topic) + '"', device)
-
-    client.publish(topic, JSON.stringify(entity), { retain: true })
-
-    PUBLISH_TOPICS.push(topic)
-  }
-
-  if (typeof entity.availability === 'string') {
-    client.publish(BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/availability', entity.availability, { retain: true })
-  }
-
-  if (entity.states instanceof Object) {
-    Object.entries(entity.states).forEach(([key, state]) => {
-      client.publish(BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + key, String(state), { retain: true })
-    })
-  }
-
-  if (support.includes('homeassistant') && !HA_DISCOVERY.includes(topic)) {
-    publishHomeAssistantDiscovery(client, device, entity, topic)
-  }
-}
-
-function subscribe (client, topic, device, key) {
-  if (typeof SUBSCRIBED_TOPICS[topic] !== 'object') {
-    SUBSCRIBED_TOPICS[topic] = {}
-  }
-
-  if (typeof SUBSCRIBED_TOPICS[topic][device.id] === 'function') {
-    return false
-  }
-
-  SUBSCRIBED_TOPICS[topic][device.id] = (state, value) => device.handle(key, state, value)
-
-  client.subscribe(BASE_TOPIC + '/' + topic)
-
-  log('📡', 'subscribed to topic "' + chalk.yellow(topic) + '"', device)
-
-  return true
-}
-
-function getEntityTopic (device, entity) {
-  return [DEVICE_TOPIC, device.id, (entity.key ? entity.key : entity)].join('/')
-}
-
-function publishHomeAssistantDiscovery (client, device, entity, topic) {
-  HA_DISCOVERY.push(topic)
-
-  const id = device.id + '_' + entity.key
-  let type = entity.type || 'sensor'
-  const config = {
+  const id = device.id + '_' + entity.id
+  const data = {
     name: entity.name,
     object_id: id,
     unique_id: id,
@@ -341,76 +546,96 @@ function publishHomeAssistantDiscovery (client, device, entity, topic) {
   }
 
   if (typeof entity.category === 'string') {
-    config.entity_category = entity.category
+    data.entity_category = entity.category
+  }
+
+  let type = entity.type || 'sensor'
+
+  switch (type) {
+    case 'sensor':
+        type = 'sensor'
+
+        data.unit_of_measurement = entity.unit
+
+        break
+
+    case 'switch':
+      // data.payload_on = 'true'
+      // data.payload_off = 'false'
+
+      break
+  
+    case 'select':
+      if (entity.options instanceof Object) {
+        data.options = Object.values(entity.options)
+        data.value_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + key + '" %} ' + value + ' ').join('') + '{% endif %}'
+        data.command_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + value + '" %} ' + key + ' ').join('') + '{% endif %}'
+      }
+
+      break
+    
+    case 'climate':
+      data.min_temp = entity.minTemp
+      data.max_temp = entity.maxTemp
+      data.temp_step = entity.tempStep
+      data.modes = entity.modes,
+      data.fan_modes = entity.fanModes
+      data.payload_available = 'online'
+      data.payload_not_available = 'offline'
+      data.availability_topic = topic + '/state'
+
+      break
+    
+    case 'number':
+      data.min = entity.min
+      data.max = entity.max
+      data.step = entity.step
+      data.mode = entity.mode
+      data.unit_of_measurement = entity.unit
+
+      break
+    
+    case 'light':
+      data.brightness_scale = entity.brightnessScale
+      data.schema = 'json'
+      data.brightness = entity.brightness
+
+      break
+    
+    case 'tracker':
+      type = 'device_tracker'
+
+      data.payload_home = 'home',
+      data.payload_not_home = 'not_home'
+
+      break
+
+    case 'event':
+      data.event_types = entity.events
+
+      break
   }
 
   if (typeof entity.availability === 'string') {
-    config['availability_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/availability'
+    data['availability_topic'] = entity.availability
   }
 
   if (entity.states instanceof Object) {
     Object.keys(entity.states).forEach(state => {
-      config[state + '_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + state
+      data[state + '_topic'] = entity.states[state]
     })
   }
 
-  if (entity.commands instanceof Array) {
-    entity.commands.forEach(command => {
-      config[command + '_topic'] = BASE_TOPIC + '/' + getEntityTopic(device, entity) + '/' + command
+  if (entity.commands instanceof Object) {
+    Object.keys(entity.commands).forEach(command => {
+      data[command + '_topic'] = entity.commands[command]
     })
   }
 
-  if (type === 'sensor') {
-    config.unit_of_measurement = entity.unit
-  }
-  
-  if (type === 'select') {
-    if (entity.options instanceof Object) {
-      config.options = Object.values(entity.options)
-      config.command_template = Object.entries(entity.options).map(([key, value]) => '{% if value == "' + value + '" %} ' + key + ' {% endif %}').join('')
-    }
-  }
-  
-  if (type === 'climate') {
-    config.min_temp = entity.minTemp
-    config.max_temp = entity.maxTemp
-    config.temp_step = entity.tempStep
-    config.modes = entity.modes,
-    config.fan_modes = entity.fanModes
-    config.payload_available = 'online'
-    config.payload_not_available = 'offline'
-    config.availability_topic = topic + '/state'
-  }
-  
-  if (type === 'number') {
-    config.min = entity.min
-    config.max = entity.max
-    config.step = entity.step
-    config.mode = entity.mode
-    config.unit_of_measurement = entity.unit
-  }
-  
-  if (type === 'light') {
-    config.brightness_scale = entity.brightnessScale
-    config.schema = 'json'
-    config.brightness = entity.brightness
-  }
-  
-  if (type === 'tracker') {
-    type = 'device_tracker'
-
-    config.payload_home = 'home',
-    config.payload_not_home = 'not_home'
-  }
-
-  if (type === 'event') {
-    config.event_types = entity.events
-  }
-
-  client.publish([HA_BASE_TOPIC, type, id, 'config'].join('/'), JSON.stringify(config), { retain: true })
+  mqttClient.publish([HA_BASE_TOPIC, type, id, 'config'].join('/'), JSON.stringify(data), { retain: true })
 }
 
-function log (icon, message, device) {
+function logo (icon, message, device) {
   const content = (icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message
 
   console.log(content)

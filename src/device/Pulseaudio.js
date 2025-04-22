@@ -2,6 +2,12 @@ import base from './base.js'
 import { PulseAudio, percentToVolume, volumeToPercent, dBToVolume, volumeTodB } from 'pulseaudio.js'
 
 const DB_MIN = -130
+const ICONS = {
+  volumeHigh: 'mdi:volume-high',
+  volumeMedium: 'mdi:volume-medium',
+  volumeLow: 'mdi:volume-low',
+  volumeMute: 'mdi:volume-mute'
+}
 
 export const info = {
   manufacturer: 'Raspberry Pi',
@@ -40,7 +46,7 @@ export const device = class extends base {
         const db = volumeTodB(sink.volume.current[0]).toFixed(1)
 
         this.emitVolumeDb(db < DB_MIN ? DB_MIN : db)
-        this.emitVolumePercent(volumeToPercent(sink.volume.current[0]).toFixed(0))
+        this.emitVolumePercent(volumeToPercent(sink.volume.current[0]).toFixed(0), sink.mute)
         this.emitMute(sink.mute ? 'ON' : 'OFF')
       }
     })
@@ -55,14 +61,25 @@ export const device = class extends base {
     })
   }
 
-  emitVolumePercent (state) {
+  emitVolumePercent (state, mute) {
+    let icon = ICONS.volumeHigh
+
+    if (mute) {
+      icon = ICONS.volumeMute
+    } else if (state < 20) {
+      icon = ICONS.volumeLow
+    } else if (state < 50) {
+      icon = ICONS.volumeMedium
+    }
+
+
     this.emitEntity({
       type: 'number',
       name: 'Volume percent',
       key: 'volume_percent',
+      icon,
       min: 0,
       max: 100,
-      mode: 'slider',
       step: 1,
       commands: ['command'],
       states: { state }
@@ -89,6 +106,7 @@ export const device = class extends base {
       type: 'switch',
       name: 'Mute',
       key: 'mute',
+      icon: ICONS.volumeMute,
       commands: ['command'],
       states: { state }
     })

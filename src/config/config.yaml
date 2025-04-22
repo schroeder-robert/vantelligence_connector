@@ -1,259 +1,223 @@
-support:
-  - homeassistant
-devices:
 # - name: Bluetooth
 #   id: bluetooth
-#   class: MadeByRob_Bluetooth
+#   type: MadeByRob_Bluetooth
+- name: (TEST) Soundsystem
+  id: sound
+  type: Pulseaudio
+  controls:
+    - name: Main
+      id: Master
+  subscribe:
+    mute: connector/device/canbus/front_panel_mute/state
+    volume_down: connector/device/canbus/front_panel_volume_down/state
+    volume_up: connector/device/canbus/front_panel_volume_up/state
 
-- name: CAN-Bus
+- name: (TEST) CAN-Bus
   id: canbus
-  class: MadeByRob_Socketcan
-  connection:
-    bus: can0
-- name: PWM-Controller
+  type: MadeByRob_Socketcan
+
+- name: (TEST) PWM-Controller
   id: pwmcontroller
-  class: PCA9685
-  connection:
-    type: i2c
-    bus: 1
+  type: PCA9685
   channels:
-  - name: Licht Schiebetür links
-    id: 0
-    type: light
-  - name: Licht Laderaum
-    id: 1
-    type: light
-  - name: Licht Schiebetür rechts
-    id: 2
-    type: light
-  - name: Licht Dachluke
-    id: 3
-    type: light
-  - name: Licht5
-    id: 4
-    type: light
-  - name: Schubladenverrieglung
-    id: 14
-    min: 400
-    max: 2600
-    scale: 180
-  - name: Kühlschrankverrieglung
-    id: 15
-    min: 400
-    max: 2600
-    scale: 180
+    - name: Licht Schiebetür links
+      id: 0
+      type: light
+    - name: Licht Laderaum
+      id: 1
+      type: light
+    - name: Licht Schiebetür rechts
+      id: 2
+      type: light
+    - name: Licht Dachluke
+      id: 3
+      type: light
+    - name: Licht5
+      id: 4
+      type: light
+    - name: Schubladenverrieglung
+      id: 14
+      min: 400
+      max: 2600
+      scale: 180
+    - name: Kühlschrankverrieglung
+      id: 15
+      min: 400
+      max: 2600
+      scale: 180
+    - name: Test
+      id: 13
+      min: 0
+      max: 2600
+      scale: 2600
 
-- name: Luftsensor
+- name: (TEST) Temperatursensor
+  id: temperatursensor
+  type: DS18B20
+  interval: 30000
+
+- name: (TEST) Luftsensor
   id: luftsensor
-  class: BME280
-  connection:
-    type: i2c
-    bus: 1
+  type: BME280
 
-- name: Helligkeitssensor
+- name: (TEST) Helligkeitssensor
   id: helligkeitssensor
-  class: BH1750
-  connection:
-    type: i2c
-    bus: 1
+  type: BH1750
 
 # - name: Wechselrichter
 #   id: wechselrichter
-#   class: Ective_CSI
+#   type: Ective_CSI
 #   connection:
 #     type: pins
 #     power_pin: 13
 #     mode_pin: 19
 #     data_pin: 26
 
-- name: Lichtsteuerung außen
-  id: lichtsteuerung_aussen
-  class: MadeByRob_Arduino
-  connection:
-    type: i2c
-    bus: 1
-  lights:
-  - name: 'Arbeitslicht rechts'
-  - name: 'Fernlicht links'
-  - name: 'Arbeitslicht links'
-  - name: 'Fernlicht rechts'
-  - name: 'Rücklicht links'
-  - name: 'Blinker vorne links'
-  - name: 'Blinker vorne rechts'
-    brightness: true
-  - name: 'Positionslicht rechts'
-    brightness: true
-  - name: 'Blinker hinten links'
-    brightness: true
-  - name: 'Positionslicht links'
-    brightness: true
-  - name: 'Blinker hinten rechts'
-    brightness: true
-  - name: 'Rücklicht rechts'
-    brightness: true
+# - name: Lichtsteuerung außen
+#   id: lichtsteuerung_aussen
+#   type: MadeByRob_Arduino
+#   names:
+#     - Fernlicht links
+#     - Fernlicht rechts
+#     - Arbeitslicht links
+#     - Arbeitslicht rechts
+#     - Blinker hinten links
+#     - Positionslicht rechts
+#     - Rücklicht rechts
+#     - Blinker hinten rechts
+#     - Rücklicht links
+#     - Blinker vorne rechts
+#     - Positionslicht links
+#     - Blinker vorne links
 
-- name: Akku
-  id: akku
-  class: JBD_BMS
-  connection:
-    type: serial
-    port: /dev/serial/by-id/battery
-- name: B2B-Laderegler
-  id: b2b_laderegler
-  class: Votronic_VCC_1212
-  connection:
-    type: serial
-    port: /dev/serial/by-id/booster
-- name: Solar-Laderegler
-  id: solar_laderegler
-  class: Ective_DSC
-  connection:
-    type: serial
-    port: /dev/serial/by-id/solar
-- name: Dieselheizung
-  id: dieselheizung
-  class: Autoterm_Air_2D
+- name: (TEST) Akku
+  id: battery
+  type: JBD_BMS
+
+- name: (TEST) B2B-Laderegler
+  id: booster
+  type: Votronic_VCC_1212
+
+- name: (TEST) Solar-Laderegler
+  id: solar
+  type: Ective_DSC
+
+- name: (TEST) Dieselheizung
+  id: heater
+  type: Autoterm_Air_2D
   subscribe:
-    temperature_current: device/luftsensor/temperature/state
-  connection:
-    type: serial
-    port: /dev/serial/by-id/heater
+    temperature_current: connector/device/luftsensor/temperature/state
 
-- name: Temperatursensor
-  id: temperatursensor
-  class: DS18B20
-  interval: 30000
-- name: Analogsensor
+- name: (TEST) Analogsensor
   id: analogsensor
-  class: ADS1115
-  connection:
-    type: i2c
-    bus: 1
+  type: ADS1115
   interval: 3000
   values:
-  - name: A0
-    measure: 0+GND
-    min: 0
-    max: 65535
-    scale: 100
-    unit: "%"
-  - name: A1
-    measure: 1+GND
-    min: 0
-    max: 65535
-    scale: 100
-    unit: "%"
-  - name: A2
-    measure: 2+GND
-    min: 0
-    max: 65535
-    scale: 100
-    unit: "%"
-  - name: A3
-    measure: 3+GND
-    min: 0
-    max: 65535
-    scale: 100
-    unit: "%"
-- name: I/O Expander
+    - name: A0
+      unit: L
+      class: water
+    - name: A1
+    - name: A2
+      unit: L
+      class: water
+    - name: A3
+
+- name: (TEST) I/O Expander
   id: gpio
-  class: MCP23017
-  connection:
-    type: i2c
-    bus: 1
-    address: 0x20
+  type: MCP23017
   pins:
-  - name: Input0
-    id: 0
-    type: in
-    inverted: true
-  - name: Input1
-    id: 1
-    type: in
-    inverted: true
-  - name: Input2
-    id: 2
-    type: in
-    inverted: true
-  - name: Input3
-    id: 3
-    type: in
-    inverted: true
-  - name: Input4
-    id: 4
-    type: in
-    inverted: true
-  - name: Taster hinten
-    key: taster_hinten
-    id: 5
-    type: in
-    inverted: true
-  - name: Taster links
-    key: taster_links
-    id: 6
-    type: in
-    inverted: true
-  - name: Taster rechts
-    key: taster_rechts
-    id: 7
-    type: in
-    inverted: true
-  - name: Abwasserventil auf
-    key: abwasserventil_auf
-    id: 8
-    type: out
-  - name: Abwasserventil zu
-    key: abwasserventil_zu
-    id: 9
-    type: out
-  - name: Wasserpumpe
-    key: wasserpumpe
-    id: 10
-    type: out
-  - name: B2B Laderegler
-    key: b2b_laderegler
-    id: 11
-    type: out
-  - name: Soundsystem
-    key: soundsystem
-    id: 12
-    type: out
-  - name: Licht
-    key: licht
-    id: 13
-    type: out
-  - name: Kühlschrank
-    key: kuehlschrank
-    id: 14
-    type: out
-  - name: Dashcam
-    key: dashcam
-    id: 15
-    type: out
-- name: GPIO
+    - name: Input0
+      id: 0
+      type: in
+      inverted: true
+    - name: Input1
+      id: 1
+      type: in
+      inverted: true
+    - name: Input2
+      id: 2
+      type: in
+      inverted: true
+    - name: Input3
+      id: 3
+      type: in
+      inverted: true
+    - name: Input4
+      id: 4
+      type: in
+      inverted: true
+    - name: Taster hinten
+      key: taster_hinten
+      id: 5
+      type: in
+      inverted: true
+    - name: Taster links
+      key: taster_links
+      id: 6
+      type: in
+      inverted: true
+    - name: Taster rechts
+      key: taster_rechts
+      id: 7
+      type: in
+      inverted: true
+    - name: Abwasserventil auf
+      key: abwasserventil_auf
+      id: 8
+      type: out
+    - name: Abwasserventil zu
+      key: abwasserventil_zu
+      id: 9
+      type: out
+    - name: Wasserpumpe
+      key: wasserpumpe
+      id: 10
+      type: out
+    - name: B2B Laderegler
+      key: b2b_laderegler
+      id: 11
+      type: out
+    - name: Soundsystem
+      key: soundsystem
+      id: 12
+      type: out
+    - name: Wechselrichter
+      key: wechselrichter
+      id: 13
+      type: out
+    - name: Kühlschrank
+      key: kuehlschrank
+      id: 14
+      type: out
+    - name: Dashcam
+      key: dashcam
+      id: 15
+      type: out
+
+- name: (TEST) GPIO
   id: gpio_pi
-  class: RaspberryPi_GPIO
+  type: RaspberryPi_GPIO
   pins:
-  - name: Kanal 1+2
-    id: 36
-    type: out
-  - name: Kanal 3+4
-    id: 35
-    type: out
-- name: Bewegungssensor
-  id: bewegungssensor
-  class: MPU_6050
-  connection:
-    type: i2c
-    bus: 1
-    address: 0x69
-  axles:
-    x:
-      map: x
-      flip: true
-    y:
-      map: z
-      flip: true
-    z:
-      map: y
-      flip: false
+    - name: Kanal 1+2
+      id: 35
+      type: out
+    - name: Kanal 3+4
+      id: 36
+      type: out
+
+# - name: Bewegungssensor
+#   id: bewegungssensor
+#   type: MPU_6050
+#   connection:
+#     bus: 1
+#     address: 0x69
+#   axles:
+#     x:
+#       map: x
+#       flip: false
+#     y:
+#       map: y
+#       flip: false
+#     z:
+#       map: z
+#       flip: false

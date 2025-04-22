@@ -21,6 +21,13 @@ export const device = class extends base {
     const { connection } = this.config
     
     this.bus = i2c.openSync(parseInt(connection.bus))
+
+    // this.poll(1000, () => {
+    //   this.bus.writeByteSync(ADDRESS, 0, 1)
+      
+    //   console.log('LI', this.bus.readByteSync(ADDRESS, 0))
+    // })
+
     this.poll(10000, () => Array.from({ length: 12 }).forEach((v, i) => this.emit(i)))
   }
 
