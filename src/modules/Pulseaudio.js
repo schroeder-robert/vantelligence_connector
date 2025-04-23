@@ -10,11 +10,12 @@ const ICONS = {
 
 export default async ({ device, poll, on, log, logError }) => {
   const dev = device('Raspberry Pi', 'Pulseaudio', '1')
+  const connection = prop('connection', { socket: '/run/audio/pulse.sock' })
 
   try {
-    const client = new PulseAudio(undefined, undefined)
+    const client = new PulseAudio(undefined, undefined, connection.socket)
 
-    await client.connect()  
+    await client.connect()
     
     const mute = dev.switch('mute', 'Mute', { icon: ICONS.volumeMute })
     const volumeDb = dev.number('volume_db', 'Volume dB', { min: DB_MIN, max: 0, step: 0.1, class: 'sound_pressure', unit: 'dB' })
