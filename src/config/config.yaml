@@ -1,4 +1,4 @@
-test:
+modules:
   # - name: Bluetooth
   #   id: bluetooth
   #   type: MadeByRob_Bluetooth

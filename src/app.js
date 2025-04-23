@@ -58,8 +58,8 @@ try {
   //   })
   // }))()
 
-  for (let config of [].concat(fullConfig || [])) {
-  // for (let config of [base].concat(mqttConfig instanceof Array ? mqttConfig : [])) {
+  for (let config of [].concat(fullConfig.modules || [])) {
+  // for (let config of [base].concat(mqttConfig.modules instanceof Array ? mqttConfig : [])) {
     const path = modulePath + config.type + '.js'
     const logPrefix = '[ ' + config.id + ' ]'
 
