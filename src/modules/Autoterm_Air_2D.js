@@ -105,7 +105,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
 
   // communication
   const sendSerial = createSerialConnection({ path: connection.port, baudRate: 9600 })
-  const requestVersion = async() => {
+  const requestVersion = async () => {
     const buffer = await send(sendSerial, 'version')
 
     if (buffer.length < 5) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 5', 'Got: ' + buffer.length)
@@ -172,8 +172,6 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
 
     pollSettings = true
   }
-  
-  await requestVersion()
 
   // commands
   control.command(value => {
@@ -228,6 +226,8 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   on('temperature_current', value => {
     reportTemperature(Math.round(value))
   })
+
+  await requestVersion()
 
   // dynamic states
   poll(2000, async () => {   
