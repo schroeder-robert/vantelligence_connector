@@ -8,10 +8,10 @@ const ICONS = {
   volumeMute: 'mdi:volume-mute'
 }
 
-export default async ({ device, poll, on, log, logError }) => {
+export default async ({ device, poll, on, prop, log, logError }) => {
   const dev = device('Raspberry Pi', 'Pulseaudio', '1')
   const connection = prop('connection', { socket: '/run/audio/pulse.sock' })
-
+  
   try {
     const client = new PulseAudio(undefined, undefined, connection.socket)
 
