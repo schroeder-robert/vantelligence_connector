@@ -11,17 +11,17 @@
       const labelRear = document.querySelector('.axels div:nth-child(2) span')
       const labelSide = document.querySelector('.axels div:nth-child(3) span')
 
-      on('device/bewegungssensor/tilt_x', data => {
-        style.setProperty('--tilt-x-mirror', data.entity.states.state * -1 + 'deg')
-        style.setProperty('--tilt-x', data.entity.states.state + 'deg')
+      on('connector/device/bewegungssensor/tilt_x/state', value => {
+        style.setProperty('--tilt-x-mirror', value * -1 + 'deg')
+        style.setProperty('--tilt-x', value + 'deg')
 
-        labelFront.innerHTML = data.entity.states.state + '&deg;'
-        labelRear.innerHTML = (data.entity.states.state * -1) + '&deg;'
+        labelFront.innerHTML = value + '&deg;'
+        labelRear.innerHTML = (value * -1) + '&deg;'
       })
 
-      on('device/bewegungssensor/tilt_y', data => {
-        style.setProperty('--tilt-y', data.entity.states.state + 'deg')
-        labelSide.innerHTML = data.entity.states.state + '&deg;'
+      on('connector/device/bewegungssensor/tilt_y/state', value => {
+        style.setProperty('--tilt-y', value + 'deg')
+        labelSide.innerHTML = value + '&deg;'
       })
     })
 

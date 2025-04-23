@@ -24,11 +24,10 @@ const DEVICE_CLASSES = {}
 const HA_BASE_TOPIC = 'homeassistant'
 
 const modulePath = './modules/'
-const moduleInstances = {}
 const valueStore = {}
 const callbackStore = {}
+const websocketStore = []
 
-let WS_CLIENTS = []
 let mqttClient
 let mqttConfig = []
 let fullConfig
@@ -45,7 +44,7 @@ try {
 
   fullConfig = YAML.parse(String(fs.readFileSync(CONFIG_FILE)))
   mqttClient = connectMqtt(MQTT_HOST, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD)
-  // startHttp()
+  startHttp()
 
   // mqttConfig = await (() => new Promise(resolve => {
   //   const timeout = setTimeout(() => {
@@ -380,7 +379,7 @@ function log () {
 }
 
 function logError () {
-  log('error', ...arguments)
+  return log('error', ...arguments)
 }
 
 function startHttp () {
@@ -394,7 +393,7 @@ function startHttp () {
       topics: []
     }
 
-    WS_CLIENTS.push(connection)
+    websocketStore.push(connection)
 
     client.on('error', console.error)
     client.on('message', data => {
@@ -504,9 +503,9 @@ function connectMqtt (host, port, username, password) {
 
 function publish (topic, value) {
   // log('Publishing to "' + topic + '":', value)
-  mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
-
   valueStore[topic] = value
+  mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
+  websocketStore.filter(c => c.topics.includes(topic)).forEach(c => c.send({ response: topic, value }))
 }
 
 function subscribe (topic, callback) {
