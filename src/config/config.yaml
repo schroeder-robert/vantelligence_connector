@@ -2,7 +2,7 @@ modules:
   # - name: Bluetooth
   #   id: bluetooth
   #   type: MadeByRob_Bluetooth
-  - name: (TEST) Soundsystem
+  - name: Soundsystem
     id: sound
     type: Pulseaudio
     controls:
@@ -13,11 +13,11 @@ modules:
       volume_down: connector/device/canbus/front_panel_volume_down/state
       volume_up: connector/device/canbus/front_panel_volume_up/state
 
-  - name: (TEST) CAN-Bus
+  - name: CAN-Bus
     id: canbus
     type: MadeByRob_Socketcan
 
-  - name: (TEST) PWM-Controller
+  - name: PWM-Controller
     id: pwmcontroller
     type: PCA9685
     channels:
@@ -52,16 +52,16 @@ modules:
         max: 2600
         scale: 2600
 
-  - name: (TEST) Temperatursensor
+  - name: Temperatursensor
     id: temperatursensor
     type: DS18B20
     interval: 30000
 
-  - name: (TEST) Luftsensor
+  - name: Luftsensor
     id: luftsensor
     type: BME280
 
-  - name: (TEST) Helligkeitssensor
+  - name: Helligkeitssensor
     id: helligkeitssensor
     type: BH1750
 
@@ -91,25 +91,25 @@ modules:
   #     - Positionslicht links
   #     - Blinker vorne links
 
-  - name: (TEST) Akku
+  - name: Akku
     id: battery
     type: JBD_BMS
 
-  - name: (TEST) B2B-Laderegler
+  - name: B2B-Laderegler
     id: booster
     type: Votronic_VCC_1212
 
-  - name: (TEST) Solar-Laderegler
+  - name: Solar-Laderegler
     id: solar
     type: Ective_DSC
 
-  - name: (TEST) Dieselheizung
+  - name: Dieselheizung
     id: heater
     type: Autoterm_Air_2D
     subscribe:
       temperature_current: connector/device/luftsensor/temperature/state
 
-  - name: (TEST) Analogsensor
+  - name: Analogsensor
     id: analogsensor
     type: ADS1115
     interval: 3000
@@ -123,7 +123,7 @@ modules:
         class: water
       - name: A3
 
-  - name: (TEST) I/O Expander
+  - name: I/O Expander
     id: gpio
     type: MCP23017
     pins:
@@ -195,7 +195,7 @@ modules:
         id: 15
         type: out
 
-  - name: (TEST) GPIO
+  - name: GPIO
     id: gpio_pi
     type: RaspberryPi_GPIO
     pins:
