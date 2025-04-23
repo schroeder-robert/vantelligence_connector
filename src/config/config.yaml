@@ -1,223 +1,224 @@
-# - name: Bluetooth
-#   id: bluetooth
-#   type: MadeByRob_Bluetooth
-- name: (TEST) Soundsystem
-  id: sound
-  type: Pulseaudio
-  controls:
-    - name: Main
-      id: Master
-  subscribe:
-    mute: connector/device/canbus/front_panel_mute/state
-    volume_down: connector/device/canbus/front_panel_volume_down/state
-    volume_up: connector/device/canbus/front_panel_volume_up/state
+test:
+  # - name: Bluetooth
+  #   id: bluetooth
+  #   type: MadeByRob_Bluetooth
+  - name: (TEST) Soundsystem
+    id: sound
+    type: Pulseaudio
+    controls:
+      - name: Main
+        id: Master
+    subscribe:
+      mute: connector/device/canbus/front_panel_mute/state
+      volume_down: connector/device/canbus/front_panel_volume_down/state
+      volume_up: connector/device/canbus/front_panel_volume_up/state
 
-- name: (TEST) CAN-Bus
-  id: canbus
-  type: MadeByRob_Socketcan
+  - name: (TEST) CAN-Bus
+    id: canbus
+    type: MadeByRob_Socketcan
 
-- name: (TEST) PWM-Controller
-  id: pwmcontroller
-  type: PCA9685
-  channels:
-    - name: Licht Schiebetür links
-      id: 0
-      type: light
-    - name: Licht Laderaum
-      id: 1
-      type: light
-    - name: Licht Schiebetür rechts
-      id: 2
-      type: light
-    - name: Licht Dachluke
-      id: 3
-      type: light
-    - name: Licht5
-      id: 4
-      type: light
-    - name: Schubladenverrieglung
-      id: 14
-      min: 400
-      max: 2600
-      scale: 180
-    - name: Kühlschrankverrieglung
-      id: 15
-      min: 400
-      max: 2600
-      scale: 180
-    - name: Test
-      id: 13
-      min: 0
-      max: 2600
-      scale: 2600
+  - name: (TEST) PWM-Controller
+    id: pwmcontroller
+    type: PCA9685
+    channels:
+      - name: Licht Schiebetür links
+        id: 0
+        type: light
+      - name: Licht Laderaum
+        id: 1
+        type: light
+      - name: Licht Schiebetür rechts
+        id: 2
+        type: light
+      - name: Licht Dachluke
+        id: 3
+        type: light
+      - name: Licht5
+        id: 4
+        type: light
+      - name: Schubladenverrieglung
+        id: 14
+        min: 400
+        max: 2600
+        scale: 180
+      - name: Kühlschrankverrieglung
+        id: 15
+        min: 400
+        max: 2600
+        scale: 180
+      - name: Test
+        id: 13
+        min: 0
+        max: 2600
+        scale: 2600
 
-- name: (TEST) Temperatursensor
-  id: temperatursensor
-  type: DS18B20
-  interval: 30000
+  - name: (TEST) Temperatursensor
+    id: temperatursensor
+    type: DS18B20
+    interval: 30000
 
-- name: (TEST) Luftsensor
-  id: luftsensor
-  type: BME280
+  - name: (TEST) Luftsensor
+    id: luftsensor
+    type: BME280
 
-- name: (TEST) Helligkeitssensor
-  id: helligkeitssensor
-  type: BH1750
+  - name: (TEST) Helligkeitssensor
+    id: helligkeitssensor
+    type: BH1750
 
-# - name: Wechselrichter
-#   id: wechselrichter
-#   type: Ective_CSI
-#   connection:
-#     type: pins
-#     power_pin: 13
-#     mode_pin: 19
-#     data_pin: 26
+  # - name: Wechselrichter
+  #   id: wechselrichter
+  #   type: Ective_CSI
+  #   connection:
+  #     type: pins
+  #     power_pin: 13
+  #     mode_pin: 19
+  #     data_pin: 26
 
-# - name: Lichtsteuerung außen
-#   id: lichtsteuerung_aussen
-#   type: MadeByRob_Arduino
-#   names:
-#     - Fernlicht links
-#     - Fernlicht rechts
-#     - Arbeitslicht links
-#     - Arbeitslicht rechts
-#     - Blinker hinten links
-#     - Positionslicht rechts
-#     - Rücklicht rechts
-#     - Blinker hinten rechts
-#     - Rücklicht links
-#     - Blinker vorne rechts
-#     - Positionslicht links
-#     - Blinker vorne links
+  # - name: Lichtsteuerung außen
+  #   id: lichtsteuerung_aussen
+  #   type: MadeByRob_Arduino
+  #   names:
+  #     - Fernlicht links
+  #     - Fernlicht rechts
+  #     - Arbeitslicht links
+  #     - Arbeitslicht rechts
+  #     - Blinker hinten links
+  #     - Positionslicht rechts
+  #     - Rücklicht rechts
+  #     - Blinker hinten rechts
+  #     - Rücklicht links
+  #     - Blinker vorne rechts
+  #     - Positionslicht links
+  #     - Blinker vorne links
 
-- name: (TEST) Akku
-  id: battery
-  type: JBD_BMS
+  - name: (TEST) Akku
+    id: battery
+    type: JBD_BMS
 
-- name: (TEST) B2B-Laderegler
-  id: booster
-  type: Votronic_VCC_1212
+  - name: (TEST) B2B-Laderegler
+    id: booster
+    type: Votronic_VCC_1212
 
-- name: (TEST) Solar-Laderegler
-  id: solar
-  type: Ective_DSC
+  - name: (TEST) Solar-Laderegler
+    id: solar
+    type: Ective_DSC
 
-- name: (TEST) Dieselheizung
-  id: heater
-  type: Autoterm_Air_2D
-  subscribe:
-    temperature_current: connector/device/luftsensor/temperature/state
+  - name: (TEST) Dieselheizung
+    id: heater
+    type: Autoterm_Air_2D
+    subscribe:
+      temperature_current: connector/device/luftsensor/temperature/state
 
-- name: (TEST) Analogsensor
-  id: analogsensor
-  type: ADS1115
-  interval: 3000
-  values:
-    - name: A0
-      unit: L
-      class: water
-    - name: A1
-    - name: A2
-      unit: L
-      class: water
-    - name: A3
+  - name: (TEST) Analogsensor
+    id: analogsensor
+    type: ADS1115
+    interval: 3000
+    values:
+      - name: A0
+        unit: L
+        class: water
+      - name: A1
+      - name: A2
+        unit: L
+        class: water
+      - name: A3
 
-- name: (TEST) I/O Expander
-  id: gpio
-  type: MCP23017
-  pins:
-    - name: Input0
-      id: 0
-      type: in
-      inverted: true
-    - name: Input1
-      id: 1
-      type: in
-      inverted: true
-    - name: Input2
-      id: 2
-      type: in
-      inverted: true
-    - name: Input3
-      id: 3
-      type: in
-      inverted: true
-    - name: Input4
-      id: 4
-      type: in
-      inverted: true
-    - name: Taster hinten
-      key: taster_hinten
-      id: 5
-      type: in
-      inverted: true
-    - name: Taster links
-      key: taster_links
-      id: 6
-      type: in
-      inverted: true
-    - name: Taster rechts
-      key: taster_rechts
-      id: 7
-      type: in
-      inverted: true
-    - name: Abwasserventil auf
-      key: abwasserventil_auf
-      id: 8
-      type: out
-    - name: Abwasserventil zu
-      key: abwasserventil_zu
-      id: 9
-      type: out
-    - name: Wasserpumpe
-      key: wasserpumpe
-      id: 10
-      type: out
-    - name: B2B Laderegler
-      key: b2b_laderegler
-      id: 11
-      type: out
-    - name: Soundsystem
-      key: soundsystem
-      id: 12
-      type: out
-    - name: Wechselrichter
-      key: wechselrichter
-      id: 13
-      type: out
-    - name: Kühlschrank
-      key: kuehlschrank
-      id: 14
-      type: out
-    - name: Dashcam
-      key: dashcam
-      id: 15
-      type: out
+  - name: (TEST) I/O Expander
+    id: gpio
+    type: MCP23017
+    pins:
+      - name: Input0
+        id: 0
+        type: in
+        inverted: true
+      - name: Input1
+        id: 1
+        type: in
+        inverted: true
+      - name: Input2
+        id: 2
+        type: in
+        inverted: true
+      - name: Input3
+        id: 3
+        type: in
+        inverted: true
+      - name: Input4
+        id: 4
+        type: in
+        inverted: true
+      - name: Taster hinten
+        key: taster_hinten
+        id: 5
+        type: in
+        inverted: true
+      - name: Taster links
+        key: taster_links
+        id: 6
+        type: in
+        inverted: true
+      - name: Taster rechts
+        key: taster_rechts
+        id: 7
+        type: in
+        inverted: true
+      - name: Abwasserventil auf
+        key: abwasserventil_auf
+        id: 8
+        type: out
+      - name: Abwasserventil zu
+        key: abwasserventil_zu
+        id: 9
+        type: out
+      - name: Wasserpumpe
+        key: wasserpumpe
+        id: 10
+        type: out
+      - name: B2B Laderegler
+        key: b2b_laderegler
+        id: 11
+        type: out
+      - name: Soundsystem
+        key: soundsystem
+        id: 12
+        type: out
+      - name: Wechselrichter
+        key: wechselrichter
+        id: 13
+        type: out
+      - name: Kühlschrank
+        key: kuehlschrank
+        id: 14
+        type: out
+      - name: Dashcam
+        key: dashcam
+        id: 15
+        type: out
 
-- name: (TEST) GPIO
-  id: gpio_pi
-  type: RaspberryPi_GPIO
-  pins:
-    - name: Kanal 1+2
-      id: 35
-      type: out
-    - name: Kanal 3+4
-      id: 36
-      type: out
+  - name: (TEST) GPIO
+    id: gpio_pi
+    type: RaspberryPi_GPIO
+    pins:
+      - name: Kanal 1+2
+        id: 35
+        type: out
+      - name: Kanal 3+4
+        id: 36
+        type: out
 
-# - name: Bewegungssensor
-#   id: bewegungssensor
-#   type: MPU_6050
-#   connection:
-#     bus: 1
-#     address: 0x69
-#   axles:
-#     x:
-#       map: x
-#       flip: false
-#     y:
-#       map: y
-#       flip: false
-#     z:
-#       map: z
-#       flip: false
+  # - name: Bewegungssensor
+  #   id: bewegungssensor
+  #   type: MPU_6050
+  #   connection:
+  #     bus: 1
+  #     address: 0x69
+  #   axles:
+  #     x:
+  #       map: x
+  #       flip: false
+  #     y:
+  #       map: y
+  #       flip: false
+  #     z:
+  #       map: z
+  #       flip: false
