@@ -21,4 +21,24 @@ ports:
   8066/tcp: 8066
 ports_description:
   8066/tcp: User Interface
+services:
+  - mqtt:need
+map:
+  - addon_config:rw
+  - share:rw
+privileged:
+  - SYS_ADMIN
+  - SYS_RAWIO
+devices:
+  - /dev/i2c-1
+devicetree: true
+usb: true
+uart: true
+udev: true
+gpio: true
+audio: true
+options:
+  config_file: config.yaml
+schema:
+  config_file: str
 #image: "ghcr.io/home-assistant/{arch}-addon-example"
