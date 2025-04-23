@@ -76,7 +76,7 @@ const SETTINGS = {
 
 const ERROR_BUFFER_TOO_SHORT = 'Buffer too short'
 
-export default async ({ device, on, poll, prop, createSerialConnection, entityClasses, entityCategories, entityUnits, stateValues, log }) => {
+export default async ({ device, on, poll, prop, createSerialConnection, entityClasses, entityCategories, entityUnits, stateValues, logError }) => {
   // basics
   const dev = device('Autoterm', 'Air 2D', '1')
   const connection = prop('connection', { port: '/dev/serial/by-id/' + prop('id') })
@@ -108,7 +108,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   const requestVersion = async() => {
     const buffer = await send(sendSerial, 'version')
 
-    if (buffer.length < 5) throw new Error(ERROR_BUFFER_TOO_SHORT)
+    if (buffer.length < 5) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 5', 'Got: ' + buffer.length)
     
     firmwareVersion.state(Array.from({ length: 4 }).map((v, i) => buffer.readUInt8(i)).join('.'))
     blackboxVersion.state(buffer.readUInt8(4))
@@ -116,7 +116,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   const requestStatus = async () => {
     const buffer = await send(sendSerial, 'status')
 
-    if (buffer.length < 15) throw new Error(ERROR_BUFFER_TOO_SHORT)
+    if (buffer.length < 15) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 15', 'Got: ' + buffer.length)
     
     const code = buffer.readUInt8(0) + '.' + buffer.readUInt8(1)
     
@@ -134,7 +134,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   const requestSettings = async (payload) => {
     const buffer = await send(sendSerial, 'settings', payload)
 
-    if (buffer.length < 6) throw new Error(ERROR_BUFFER_TOO_SHORT)
+    if (buffer.length < 6) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 6', 'Got: ' + buffer.length)
     
     bufferSettings = buffer
     timer.state((v => v === 65535 ? 0 : v)(buffer.readUInt16BE(0)))
@@ -147,7 +147,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   const reportTemperature = async (value) => {
     const buffer = await send(sendSerial, 'temperature', Buffer.from([parseInt(value)]))
   
-    if (buffer.length < 1) throw new Error(ERROR_BUFFER_TOO_SHORT)
+    if (buffer.length < 1) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 1', 'Got: ' + buffer.length)
 
     temperaturePanel.state(buffer.readUInt8(0))
   }
