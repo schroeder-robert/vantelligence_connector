@@ -1,5 +1,4 @@
 import process from 'node:process'
-import chalk from 'chalk'
 import mqtt from 'mqtt'
 import fs from 'fs'
 import YAML from 'yaml'
