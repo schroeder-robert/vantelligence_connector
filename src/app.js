@@ -36,41 +36,24 @@ try {
   if (!fs.existsSync(CONFIG_FILE)) throw new Error('No config file found!')
 
   const startups = []
-  const base = {
-    id: 'connector',
-    name: 'connector',
-    type: 'connector'
-  } 
 
   fullConfig = YAML.parse(String(fs.readFileSync(CONFIG_FILE)))
   mqttClient = connectMqtt(MQTT_HOST, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD)
   startHttp()
 
-  // mqttConfig = await (() => new Promise(resolve => {
-  //   const timeout = setTimeout(() => {
-  //     throw new Error('Config timeout')
-  //   }, 10000)
+  mqttConfig = await (() => new Promise(resolve => {
+    const timeout = setTimeout(() => {
+      throw new Error('Config timeout')
+    }, 10000)
     
-  //   subscribe(BASE_TOPIC, m => {
-  //     clearTimeout(timeout)
-  //     resolve(m)
-  //   })
-  // }))()
+    subscribe(BASE_TOPIC, m => {
+      clearTimeout(timeout)
+      resolve(JSON.parse(m))
+    })
+  }))()
 
-  for (let config of [].concat(fullConfig.modules || [])) {
-  // for (let config of [base].concat(mqttConfig.modules instanceof Array ? mqttConfig : [])) {
-    const path = modulePath + config.type + '.js'
-    const logPrefix = '[ ' + config.id + ' ]'
-
-    try {
-      const module = await import(path)
-
-      if (typeof module.default !== 'function') throw new Error('Not a function!')
-
-      startups.push(init(logPrefix, module, config))
-    } catch (error) {
-      logError(logPrefix, 'Could not load module "' + path + '":', error)
-    }
+  for (let config of fullConfig.modules instanceof Array ? fullConfig.modules : []) {
+    if (config) startups.push(init(config))
   }
 
   Promise.all(startups).then((values) => {
@@ -82,15 +65,36 @@ try {
   logError('INIT ERROR', error)
 }
 
-function updateConfig (data) {
-  publish(BASE_TOPIC, data)
+async function configAdd (data) {
+  mqttConfig.push(data)
+
+  publish(BASE_TOPIC, mqttConfig)
+
+  await init(data)
+
   log('UC', data)
 }
 
-async function init (logPrefix, module, config) {
+async function configRemove (id) {
+  mqttConfig.splice(mqttConfig.findIndex(m => {
+    if (!m) return
+    return m.id === id
+  }), 1)
+  
+  publish(BASE_TOPIC, mqttConfig)
+}
+
+async function init (config) {
+  const path = modulePath + config.type + '.js'
+  const logPrefix = '[ ' + config.name + ' ]'
+    
   try {
+    const module = await import(path)
+
+    if (typeof module.default !== 'function') throw new Error('Not a function!')
+
     await module.default({
-      restart: function (delay) { return setTimeout(() => { init(logPrefix, module, config) }, delay || 3000) },
+      restart: function (delay) { return setTimeout(() => { init(config) }, delay || 3000) },
       prop: function () { return prop(config, ...arguments) },
       device: function () { return device(config, ...arguments) },
       log: function () { return log(logPrefix, ...arguments) },
@@ -100,10 +104,12 @@ async function init (logPrefix, module, config) {
       wait,
       convertKeyToMethod,
       convertNameToKey,
+      getSerialDevices,
       createSerialConnection: function () { return createSerialConnection(logPrefix, ...arguments) },
       modulePath,
       mqttConfig,
-      updateConfig,
+      configAdd,
+      configRemove,
       stateValues,
       entityClasses,
       entityCategories,
@@ -248,7 +254,7 @@ function topic () {
 }
 
 function on (config, key, callback) {
-  if (!(key in config.subscribe)) return
+  if (!('subscribe' in config && key in config.subscribe)) return
 
   subscribe(config.subscribe[key], callback)
 }
@@ -303,6 +309,8 @@ function createSerialConnection (logPrefix, options, parser, callback) {
   let pipe = null
 
   const connect = () => {
+    log(logPrefix, 'Connectiong to serial device:', options.path)
+
     port = new SerialPort(Object.assign({ autoOpen: false }, options))
     port.open(error => {
       if (error) {
@@ -358,6 +366,20 @@ function createSerialConnection (logPrefix, options, parser, callback) {
       }
     })
   }
+}
+
+function getSerialDevices () {
+  return new Promise(resolve => {
+    const path = '/dev/serial/by-path'
+
+    fs.readdir(path, async (error, files) => {
+      if (error) {
+        return logError(error)
+      }
+
+      resolve(Object.fromEntries(files.map(f => [path + '/' + f, path + '/' + f])))
+    })
+  })
 }
 
 function log () {
@@ -498,6 +520,8 @@ function connectMqtt (host, port, username, password) {
     logError('Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + error.message)
   })
 
+  client.subscribe(BASE_TOPIC + '/#')
+
   return client
 }
 
@@ -505,12 +529,13 @@ function publish (topic, value) {
   // log('Publishing to "' + topic + '":', value)
   valueStore[topic] = value
   mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
+  // mqttClient.subscribe(topic)
   websocketStore.filter(c => c.topics.includes(topic)).forEach(c => c.send({ response: topic, value }))
 }
 
 function subscribe (topic, callback) {
   log('Subscribing to "' + topic + '"')
-  mqttClient.subscribe(topic)
+  // mqttClient.subscribe(topic)
 
   if (!(topic in callbackStore)) callbackStore[topic] = []
 
@@ -518,11 +543,13 @@ function subscribe (topic, callback) {
 }
 
 function react (topic, message) {
-  if (!(topic in callbackStore)) return
-
-  callbackStore[topic].forEach(callback => {
-    if (typeof callback === 'function') callback(String(message))
-  })
+  if (topic in callbackStore) {
+    callbackStore[topic].forEach(callback => {
+      if (typeof callback === 'function') callback(String(message))
+    })
+  } else if (!(topic in valueStore)) {
+    valueStore[topic] = String(message)
+  }
 }
 
 function publishHomeAssistantDiscovery (device, entity) {
@@ -567,8 +594,8 @@ function publishHomeAssistantDiscovery (device, entity) {
     case 'select':
       if (entity.options instanceof Object) {
         data.options = Object.values(entity.options)
-        data.value_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + key + '" %} ' + value + ' ').join('') + '{% endif %}'
-        data.command_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + value + '" %} ' + key + ' ').join('') + '{% endif %}'
+        data.value_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + key + '" %}' + value).join('') + '{% endif %}'
+        data.command_template = Object.entries(entity.options).map(([key, value], i) => '{% ' + (!i ? 'if' : 'elif') + ' value == "' + value + '" %}' + key).join('') + '{% endif %}'
       }
 
       break

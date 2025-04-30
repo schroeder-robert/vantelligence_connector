@@ -5,6 +5,8 @@ modules:
   - name: Soundsystem
     id: sound
     type: Pulseaudio
+    connection:
+      socket:
     controls:
       - name: Main
         id: Master

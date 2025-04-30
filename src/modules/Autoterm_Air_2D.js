@@ -76,7 +76,7 @@ const SETTINGS = {
 
 const ERROR_BUFFER_TOO_SHORT = 'Buffer too short'
 
-export default async ({ device, on, poll, prop, createSerialConnection, entityClasses, entityCategories, entityUnits, stateValues, logError }) => {
+export default async ({ device, on, poll, prop, createSerialConnection, entityClasses, entityCategories, entityUnits, log, logError }) => {
   // basics
   const dev = device('Autoterm', 'Air 2D', '1')
   const connection = prop('connection', { port: '/dev/serial/by-id/' + prop('id') })
@@ -217,9 +217,9 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
 
   level.command(value => {
     value = Number(value) - 1
-
+    
     if (value < 0 || value > 9) return
-
+    
     updateSettings(SETTINGS.level, value)
   })
 

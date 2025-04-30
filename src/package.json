@@ -10,7 +10,6 @@
   "dependencies": {
     "ads1115": "^1.2.0",
     "bme280-sensor": "^0.1.7",
-    "chalk": "^5.0.0",
     "ds18b20-raspi": "^0.3.6",
     "i2c-bus": "^5.2.3",
     "i2c-io-expanders": "^1.0.1",

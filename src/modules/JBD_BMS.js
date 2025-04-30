@@ -34,7 +34,7 @@ export default async ({ device, poll, prop, createSerialConnection, entityClasse
   const dev = device('JBD', '', '1')
   const connection = prop('connection', { port: '/dev/serial/by-id/' + prop('id') })
   const filters = { packVoltage: new KalmanFilter({ R: 5, Q: 1 }), packCurrent: new KalmanFilter({ R: 5, Q: 1 }) }
-  
+
   // entities
   const name = dev.sensor('name', 'Name')
   const softwareVersion = dev.sensor('software_version', 'Software Version')
@@ -49,7 +49,7 @@ export default async ({ device, poll, prop, createSerialConnection, entityClasse
   const cycleCount = dev.sensor('cycle_count', 'Ladezyklen', { category: entityCategories.diagnostic })
   const cellCount = dev.sensor('cell_count', 'Anzahl Zellen', { category: entityCategories.diagnostic })
   const temperatureSensorCount = dev.sensor('temperature_sensor_count', 'Anzahl Temperatursensoren', { category: entityCategories.diagnostic })
-  const errors = Array.from({ length: 16 }).map(id => dev.binarySensor(id, ERRORS[id], { category: entityCategories.diagnostic }))
+  const errors = Array.from({ length: 16 }).map((v, i) => dev.binarySensor('error_' + Object.keys(ERRORS)[i], Object.values(ERRORS)[i], { category: entityCategories.diagnostic }))
   const temperatures = []
   const cells = []
 
@@ -84,7 +84,7 @@ export default async ({ device, poll, prop, createSerialConnection, entityClasse
     cycleCapacity.state(buffer.readUInt16BE(4) / 100)
     designCapacity.state(buffer.readUInt16BE(6) / 100)
     cycleCount.state(buffer.readUInt16BE(8))
-    errors.forEach((e, i) => e.state((buffer.readUInt16BE(16) >> i) & 1 ? stateValues.off : stateValues.on))
+    errors.forEach((e, i) => e.state((buffer.readUInt16BE(16) >> i) & 1 ? stateValues.on : stateValues.off))
     stateOfCharge.state(buffer.readUInt8(19))
     chargeEnabled.state(buffer.readUInt8(20) & 1 ? stateValues.on : stateValues.off)
     dischargeEnabled.state(buffer.readUInt8(20) >> 1 ? stateValues.on : stateValues.off)
@@ -92,7 +92,7 @@ export default async ({ device, poll, prop, createSerialConnection, entityClasse
     temperatures.forEach((t, i) => t.state((buffer.readUInt16BE(23 + (i * 2)) - 2731) / 10))
   }
   const requestVoltages = async () => {
-    const buffer = await read('info')
+    const buffer = await read('voltages')
     const length = cellCount.state() * 2
 
     if (buffer.length < length) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: ' + length, 'Got: ' + buffer.length)

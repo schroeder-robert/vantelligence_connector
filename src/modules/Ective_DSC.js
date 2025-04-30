@@ -7,7 +7,7 @@ const REGISTERS = {
 
 const ERROR_BUFFER_TOO_SHORT = 'Buffer too short'
 
-export default ({ device, poll, prop, createSerialConnection, log, logError }) => {
+export default async ({ device, poll, prop, createSerialConnection, log, logError }) => {
   // basics
   const dev = device('Ective', 'DSC', '1')
   const connection = prop('connection', { port: '/dev/serial/by-id/' + prop('id') })
@@ -22,8 +22,9 @@ export default ({ device, poll, prop, createSerialConnection, log, logError }) =
   
   // communication
   const sendSerial = createSerialConnection({ path: connection.port, baudRate: 9600 }, new DelimiterParser({ delimiter: Buffer.from([0xFF]) }))
-  const requestData = async () => {
-    let buffer = await sendSerial([255, 226, 2, 228])
+
+  poll(3000, async () => {
+    const buffer = await sendSerial([255, 226, 2, 228])
 
     switch (REGISTERS[buffer.readUInt8(0)]) {
       case 'status':
@@ -38,7 +39,5 @@ export default ({ device, poll, prop, createSerialConnection, log, logError }) =
 
         // console.table([Object.fromEntries(Array.from({ length: 19 }).map((v, i) => (o => [ o, (([1, 3, 9, 11, 25].includes(o) ? 'x ' : 0) + buffer.readUInt16BE(o))])(i * 2 + 1)))])
     }
-  }
-
-  poll(3000, requestData)
+  })
 }
