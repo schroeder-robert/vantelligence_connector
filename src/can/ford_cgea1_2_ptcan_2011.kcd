@@ -27,6 +27,18 @@
       </Signal>
     </Message>
 
+    <Message id="0x2A1" name="Media_Steering_Wheel" length="8">
+      <Notes></Notes>
+      <Producer>
+        <NodeRef id="1"/>
+      </Producer>
+      <Signal name="Button" offset="0" length="8" endianess="big">
+        <Consumer>
+          <NodeRef id="1"/>
+        </Consumer>
+      </Signal>
+    </Message>
+
     <Message id="0x2A0" name="Media_Front_Panel" length="8">
       <Notes></Notes>
       <Producer>

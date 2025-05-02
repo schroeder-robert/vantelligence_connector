@@ -2,7 +2,7 @@ import can from 'socketcan'
 
 const STORE = {}
 const values = {}
-const BUTTONS = {
+const FP_BUTTONS = {
   24: 'Sound',
   31: 'Power',
   50: 'SeekPrevious',
@@ -12,6 +12,13 @@ const BUTTONS = {
   75: 'TuneMinus',
   79: 'Source',
   80: 'Display',
+}
+const SW_BUTTONS = {
+  48: 'Command',
+  97: 'Previous',
+  98: 'Next',
+  253: 'VolumeUp',
+  254: 'VolumeDown'
 }
 
 export default ({ device, poll, prop, entityUnits, log }) => {
@@ -34,8 +41,10 @@ export default ({ device, poll, prop, entityUnits, log }) => {
   const frontPanelVolumeDown = dev.binarySensor('front_panel_volume_down', 'Front Panel Volume Down')
   const frontPanelVolumeUp = dev.binarySensor('front_panel_volume_up', 'Front Panel Volume Up')
   const frontPanelButtons = {}
+  const steeringWheelButtons = {}
   
-  Object.entries(BUTTONS).forEach(([i, b]) => frontPanelButtons[i] = dev.binarySensor('front_panel_' + b.toLowerCase(), 'Front Panel ' + b))
+  Object.entries(FP_BUTTONS).forEach(([i, b]) => frontPanelButtons[i] = dev.binarySensor('front_panel_' + b.toLowerCase(), 'Front Panel ' + b))
+  Object.entries(SW_BUTTONS).forEach(([i, b]) => steeringWheelButtons[i] = dev.binarySensor('steering_wheel_' + b.toLowerCase(), 'Steering Wheel ' + b))
 
   // communication
   const channel = can.createRawChannel(connection.interface, true)
@@ -46,6 +55,7 @@ export default ({ device, poll, prop, entityUnits, log }) => {
     'GPS_Data_Nav_2_HS',
     'GPS_Data_Nav_3_HS',
     'Media_Front_Panel',
+    'Media_Steering_Wheel',
     'Doors_Front',
     'Engine'
   ]
@@ -57,7 +67,13 @@ export default ({ device, poll, prop, entityUnits, log }) => {
     Object.values(message.signals).forEach(s => {
       // log(s)
       s.onChange(signal => {
-        if (key  === 'Media_Front_Panel') {
+        if (key  === 'Media_Steering_Wheel') {
+          if (signal.value === 255) {
+            Object.values(steeringWheelButtons).forEach(b => b.state('OFF'))
+          } else {
+            steeringWheelButtons[signal.value]?.state('ON')
+          }
+        } else if (key  === 'Media_Front_Panel') {
           if (signal.name === 'Button') {
             id = signal.value
           } else if (id < 255 && signal.name === 'Action') {
