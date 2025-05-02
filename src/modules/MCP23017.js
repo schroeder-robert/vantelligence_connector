@@ -46,7 +46,7 @@ export default async ({ device, poll, prop, restart, stateValues, log, logError 
     }
   }
 
-  mcp.on('input', event => entities[event.pin].state(event.value))
+  mcp.on('input', event => entities[event.pin].state(event.value ? stateValues.on : stateValues.off))
 
   poll(50, () => mcp.doPoll())
 }
