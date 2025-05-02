@@ -3,6 +3,18 @@
   <Node name="XXX" id="1"/>
   <Bus name="ford_cgea1_2_ptcan_2011">
 
+    <Message id="0x109" name="Engine" length="8">
+      <Notes></Notes>
+      <Producer>
+        <NodeRef id="1"/>
+      </Producer>
+      <Signal name="Engine_RPM" offset="0" length="16" endianess="big">
+        <Consumer>
+          <NodeRef id="1"/>
+        </Consumer>
+      </Signal>
+    </Message>
+
     <Message id="0x433" name="Doors_Front" length="8">
       <Notes></Notes>
       <Producer>

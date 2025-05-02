@@ -14,7 +14,7 @@ const BUTTONS = {
   80: 'Display',
 }
 
-export default ({ device, poll, prop, log }) => {
+export default ({ device, poll, prop, entityUnits, log }) => {
   // basics
   const dev = device('Ford', 'HS-CAN', '1')
   const connection = prop('connection', { interface: 'can0' })
@@ -30,6 +30,7 @@ export default ({ device, poll, prop, log }) => {
   const gpsAltitude = dev.sensor('gps_altitude', 'GPS Altitude', { class: 'distance', unit: 'ft' })
   const gpsTime = dev.sensor('gps_time', 'GPS Time', { class: 'date' })
   const gpsTracker = dev.tracker('gps', 'GPS', { icon: 'mdi:map-marker' })
+  const engineRpm = dev.sensor('engine_rpm', 'Engine RPM', { icon: 'mdi:engine', unit: entityUnits.rpm })
   const frontPanelVolumeDown = dev.binarySensor('front_panel_volume_down', 'Front Panel Volume Down')
   const frontPanelVolumeUp = dev.binarySensor('front_panel_volume_up', 'Front Panel Volume Up')
   const frontPanelButtons = {}
@@ -45,32 +46,36 @@ export default ({ device, poll, prop, log }) => {
     'GPS_Data_Nav_2_HS',
     'GPS_Data_Nav_3_HS',
     'Media_Front_Panel',
-    'Doors_Front'
+    'Doors_Front',
+    'Engine'
   ]
 
   messages.forEach(key => {
     const message = bus.messages[key]
     let id = 0
     
-    Object.values(message.signals).forEach(s => s.onChange(signal => {
-      if (key  === 'Media_Front_Panel') {
-        if (signal.name === 'Button') {
-          id = signal.value
-        } else if (id < 255 && signal.name === 'Action') {
-          frontPanelButtons[id].state(signal.value == 16 ? 'ON' : 'OFF')
-        } else if (signal.name === 'Direction') {
-          frontPanelVolumeDown.state(signal.value == 29 ? 'ON' : 'OFF')
-          frontPanelVolumeUp.state(signal.value == 31 ? 'ON' : 'OFF')
-        }
+    Object.values(message.signals).forEach(s => {
+      // log(s)
+      s.onChange(signal => {
+        if (key  === 'Media_Front_Panel') {
+          if (signal.name === 'Button') {
+            id = signal.value
+          } else if (id < 255 && signal.name === 'Action') {
+            frontPanelButtons[id].state(signal.value == 16 ? 'ON' : 'OFF')
+          } else if (signal.name === 'Direction') {
+            frontPanelVolumeDown.state(signal.value == 29 ? 'ON' : 'OFF')
+            frontPanelVolumeUp.state(signal.value == 31 ? 'ON' : 'OFF')
+          }
 
-        // console.log(key, signal.name, signal.value)
-      } else if (key  === 'Doors_Front') {
-        console.log(key, signal.name, signal.value)
-      } else {
-        values[key] = values[key] || {}
-        values[key][signal.name] = signal.value
-      }
-    }))
+          // console.log(key, signal.name, signal.value)
+        } else if (key  === 'Doors_Front') {
+          console.log(key, signal.name, signal.value)
+        } else {
+          values[key] = values[key] || {}
+          values[key][signal.name] = signal.value
+        }
+      })
+    })
   })
 
   channel.start()
@@ -99,13 +104,15 @@ export default ({ device, poll, prop, log }) => {
     'GPS_Hdop',
     'GPS_Pdop',
     'GPS_Sat_num_in_view',
-    'GPS_Compass_direction'
+    'GPS_Compass_direction',
+    'Engine_RPM'
   ]
 
   poll(1000, async () => {
     const gps1 = values['GPS_Data_Nav_1_HS'] || {}
     const gps2 = values['GPS_Data_Nav_2_HS'] || {}
     const gps3 = values['GPS_Data_Nav_3_HS'] || {}
+    const engine = values['Engine'] || {}
 
     gpsVerticalDop.state(gps3['GPS_Vdop'] || 0)
     gpsHorizontalDop.state(gps3['GPS_Hdop'] || 0)
@@ -121,6 +128,7 @@ export default ({ device, poll, prop, log }) => {
       longitude: ((gps1['GPS_Longitude_Degrees'] || 0) + (((gps1['GPS_Longitude_Minutes'] || 0) + (gps1['GPS_Longitude_Min_dec'] || 0)) / 60)) * ((gps1['GpsHsphLongEast_D_Actl'] || 1) === 1 ? 1 : -1 ),
       gps_accuracy: gpsPositionalDop.state()
     })
+    engineRpm.state(engine['Engine_RPM'] ? Math.round(engine['Engine_RPM'] / 4) : 0)
 
     // Temp automatic
     for (let key in values) {
