@@ -526,8 +526,13 @@ function connectMqtt (host, port, username, password) {
 
 function publish (topic, value) {
   // log('Publishing to "' + topic + '":', value)
+  // log('TYPE-------', typeof value)
   valueStore[topic] = value
-  mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
+  try {
+    mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
+  } catch (ex) {
+    logError(ex)
+  }
   // mqttClient.subscribe(topic)
   websocketStore.filter(c => c.topics.includes(topic)).forEach(c => c.send({ response: topic, value }))
 }

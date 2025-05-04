@@ -130,9 +130,9 @@ export default ({ device, poll, prop, entityUnits, log }) => {
     const gps3 = values['GPS_Data_Nav_3_HS'] || {}
     const engine = values['Engine'] || {}
 
-    gpsVerticalDop.state(gps3['GPS_Vdop'] || 0)
-    gpsHorizontalDop.state(gps3['GPS_Hdop'] || 0)
-    gpsPositionalDop.state(gps2['GPS_Pdop'] || 0)
+    gpsVerticalDop.state(gps3['GPS_Vdop'] ? Math.round(gps3['GPS_Vdop'] * 100) / 100 : 0)
+    gpsHorizontalDop.state(gps3['GPS_Hdop'] ? Math.round(gps3['GPS_Hdop'] * 100) / 100 : 0)
+    gpsPositionalDop.state(gps2['GPS_Pdop'] ? Math.round(gps2['GPS_Pdop'] * 100) / 100 : 0)
     gpsHeading.state((v => v ? Math.round(v) : 0)(gps3['GPS_Heading']))
     gpsDirection.state(['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'][gps2['GPS_Compass_direction'] || 0])
     gpsSatellites.state(gps3['GPS_Sat_num_in_view'] || 0)
