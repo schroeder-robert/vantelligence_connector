@@ -177,6 +177,11 @@ function entity (device, type, id, name, attributes) {
 
       break
     
+    case 'tracker':
+      data.states.json_attributes = topic(device.id, id, 'json_attributes')
+
+      break
+
     case 'switch':
     case 'button':
     case 'select':

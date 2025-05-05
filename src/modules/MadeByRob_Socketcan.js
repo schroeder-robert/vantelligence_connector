@@ -21,10 +21,48 @@ const SW_BUTTONS = {
   254: 'VolumeDown'
 }
 
-export default ({ device, poll, prop, entityUnits, log }) => {
+export default ({ device, poll, prop, entityUnits, log, logError }) => {
   // basics
   const dev = device('Ford', 'HS-CAN', '1')
   const connection = prop('connection', { interface: 'can0' })
+  const messages = [
+    'GPS_Data_Nav_1_HS',
+    'GPS_Data_Nav_2_HS',
+    'GPS_Data_Nav_3_HS',
+    'Media_Front_Panel',
+    'Media_Steering_Wheel',
+    'Doors_Front',
+    'Engine'
+  ]
+  const ignored = [
+    'GPS_Latitude_Degrees',
+    'GPS_Latitude_Minutes',
+    'GPS_Latitude_Min_dec',
+    'GpsHsphLattSth_D_Actl',
+    'GPS_Longitude_Degrees',
+    'GPS_Longitude_Minutes',
+    'GPS_Longitude_Min_dec',
+    'GpsHsphLongEast_D_Actl',
+    'GpsUtcYr_No_Actl',
+    'GpsUtcMnth_No_Actl',
+    'GpsUtcDay_No_Actl',
+    'GPS_UTC_hours',
+    'GPS_UTC_minutes',
+    'GPS_UTC_seconds',
+    'GPS_MSL_altitude',
+    'GPS_Speed',
+    'GPS_Heading',
+    'GPS_Vdop',
+    'GPS_Hdop',
+    'GPS_Pdop',
+    'GPS_Sat_num_in_view',
+    'GPS_Compass_direction',
+    'Engine_RPM',
+    'Action',
+    'Direction',
+    'Button',
+    'Side'
+  ]
 
   // entities
   const gpsVerticalDop = dev.sensor('gps_vertical_dop', 'GPS Vertical DOP')
@@ -42,6 +80,7 @@ export default ({ device, poll, prop, entityUnits, log }) => {
   const frontPanelVolumeUp = dev.binarySensor('front_panel_volume_up', 'Front Panel Volume Up')
   const frontPanelButtons = {}
   const steeringWheelButtons = {}
+  const other = {}
   
   Object.entries(FP_BUTTONS).forEach(([i, b]) => frontPanelButtons[i] = dev.binarySensor('front_panel_' + b.toLowerCase(), 'Front Panel ' + b))
   Object.entries(SW_BUTTONS).forEach(([i, b]) => steeringWheelButtons[i] = dev.binarySensor('steering_wheel_' + b.toLowerCase(), 'Steering Wheel ' + b))
@@ -50,22 +89,14 @@ export default ({ device, poll, prop, entityUnits, log }) => {
   const channel = can.createRawChannel(connection.interface, true)
   const network = can.parseNetworkDescription('can/ford_cgea1_2_ptcan_2011.kcd')
   const bus = new can.DatabaseService(channel, network.buses['ford_cgea1_2_ptcan_2011'])
-  const messages = [
-    'GPS_Data_Nav_1_HS',
-    'GPS_Data_Nav_2_HS',
-    'GPS_Data_Nav_3_HS',
-    'Media_Front_Panel',
-    'Media_Steering_Wheel',
-    'Doors_Front',
-    'Engine'
-  ]
 
   messages.forEach(key => {
     const message = bus.messages[key]
     let id = 0
     
     Object.values(message.signals).forEach(s => {
-      // log(s)
+      if (!ignored.includes(s.name) && !(s.name in other)) other[s.name] = dev.sensor(key + '_' + s.name)
+
       s.onChange(signal => {
         if (key  === 'Media_Steering_Wheel') {
           if (signal.value === 255) {
@@ -98,32 +129,6 @@ export default ({ device, poll, prop, entityUnits, log }) => {
 
   // console.log(connection.bus, 'ready')
 
-  const ignored = [
-    'GPS_Latitude_Degrees',
-    'GPS_Latitude_Minutes',
-    'GPS_Latitude_Min_dec',
-    'GpsHsphLattSth_D_Actl',
-    'GPS_Longitude_Degrees',
-    'GPS_Longitude_Minutes',
-    'GPS_Longitude_Min_dec',
-    'GpsHsphLongEast_D_Actl',
-    'GpsUtcYr_No_Actl',
-    'GpsUtcMnth_No_Actl',
-    'GpsUtcDay_No_Actl',
-    'GPS_UTC_hours',
-    'GPS_UTC_minutes',
-    'GPS_UTC_seconds',
-    'GPS_MSL_altitude',
-    'GPS_Speed',
-    'GPS_Heading',
-    'GPS_Vdop',
-    'GPS_Hdop',
-    'GPS_Pdop',
-    'GPS_Sat_num_in_view',
-    'GPS_Compass_direction',
-    'Engine_RPM'
-  ]
-
   poll(1000, async () => {
     const gps1 = values['GPS_Data_Nav_1_HS'] || {}
     const gps2 = values['GPS_Data_Nav_2_HS'] || {}
@@ -149,11 +154,7 @@ export default ({ device, poll, prop, entityUnits, log }) => {
     // Temp automatic
     for (let key in values) {
       for (let signal in values[key]) {
-        if (ignored.includes(signal)) continue
-
-        const entity = dev.sensor(key + '_' + signal)
-        
-        entity.state(values[key][signal])
+        if (!ignored.includes(signal)) other[signal].state(values[key][signal])
       }
     }
   })

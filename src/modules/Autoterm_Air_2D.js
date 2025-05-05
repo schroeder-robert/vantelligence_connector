@@ -245,9 +245,7 @@ async function send (transport, key, payload) {
   const bytes = Buffer.concat([header, payload, checksum(Buffer.concat([header, payload]))])
   const buffer = await transport(bytes)
   
-  if (buffer.length < 5) {
-    throw new Error('Buffer too short')
-  }
+  if (buffer.length < 5) throw new Error('Buffer too short')
 
   const type = MESSAGE_TYPES[buffer.readUInt8(1)] || buffer.readUInt8(1)
   // const length = buffer[2]
