@@ -242,6 +242,9 @@ function state (device, entity, id, value) {
   const current = valueStore[entity.states[id]]
 
   if (value === undefined) return current
+
+  value = value instanceof Object ? JSON.stringify(value) : value
+
   if (value !== current) publish(entity.states[id], value)
 
   return value

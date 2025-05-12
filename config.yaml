@@ -1,6 +1,6 @@
 # https://developers.home-assistant.io/docs/add-ons/configuration#add-on-config
 name: Vantelligence Connector
-version: 0.0.77
+version: 0.0.78
 slug: vantelligence_connector
 description: MQTT Connector for devices in your camper.
 url: "https://github.com/schroeder-robert/vantelligence_connector"
