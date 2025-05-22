@@ -42,7 +42,7 @@ try {
 
   mqttConfig = await (() => new Promise(resolve => {
     const timeout = setTimeout(() => {
-      throw new Error('Config timeout')
+      logError('Config timeout')
     }, 10000)
     
     subscribe(BASE_TOPIC, m => {
