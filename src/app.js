@@ -525,7 +525,7 @@ function connectMqtt (host, port, username, password) {
 
   client.on('message', react)
   client.on('error', error => {
-    logError('Error connecting mqtt at "' + chalk.cyan(MQTT_HOST + ':' + MQTT_PORT) + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + error.message)
+    logError('Error connecting mqtt at "' + MQTT_HOST + ':' + MQTT_PORT + '" with user name "' + MQTT_USERNAME + '" and password "' + MQTT_PASSWORD + '": ' + error.message)
   })
 
   client.subscribe(BASE_TOPIC + '/#')
@@ -675,7 +675,7 @@ function publishHomeAssistantDiscovery (device, entity) {
 }
 
 function logo (icon, message, device) {
-  const content = (icon ? icon + '  ' : '') + (device ? chalk.black.bgCyan(' ' + device.name + ' ') + ' ' : '') + message
+  const content = (icon ? icon + '  ' : '') + (device ? ' ' + device.name + ' ' + ' ' : '') + message
 
   console.log(content)
 
