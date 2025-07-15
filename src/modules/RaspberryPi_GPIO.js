@@ -5,40 +5,31 @@ export default ({ device, prop, stateValues, log, logError }) => {
   const pins = prop('pins')
 
   try {
-    rpio.init({ gpiomem: false })
+    rpio.init({ gpiomem: true })
 
     pins.forEach(pin => {
+      const on = pin.inverted ? rpio.LOW : rpio.HIGH
+      const off = pin.inverted ? rpio.HIGH : rpio.LOW
+
       let entity = null
-
-      const emit = pin => {
-        const state = rpio.read(pin.id)
-
-        entity.states = {
-          state: (state === 1 && !pin.inverted) || (state !== 1 && pin.inverted) ? stateValues.on : stateValues.off
-        }
-
-        this.emitEntity(entity)
-      }
 
       if (pin.type === 'in') {
         entity = dev.binarySensor('input' + pin.id, pin.name || 'Input #' + pin.id)
-        entity.state(stateValues.off)
         
         rpio.open(pin.id, rpio.INPUT, pin.pull === 'up' ? rpio.PULL_UP : (pin.pull === 'down' ? rpio.PULL_DOWN : rpio.PULL_OFF))
       }
 
       if (pin.type === 'out') {
         entity = dev.switch('output' + pin.id, pin.name || 'Output #' + pin.id)
-        entity.state(stateValues.off)
         entity.command(value => {
-          rpio.write(pin.id, (value === stateValues.on && !pin.inverted) || (value !== stateValues.on && pin.inverted) ? rpio.HIGH : rpio.LOW)
+          rpio.write(pin.id, value === stateValues.on ? on : off)
         })
 
         rpio.open(pin.id, rpio.OUTPUT)
+        entity.state(rpio.read(pin.id) == on ? stateValues.on : stateValues.off)
       }
 
-      // TO DO
-      rpio.poll(pin.id, (v) => log('--------------------------------', v))
+      rpio.poll(pin.id, v => entity.state(rpio.read(v) === on ? stateValues.on : stateValues.off))
     })
   } catch (error) {
     logError(error.message)

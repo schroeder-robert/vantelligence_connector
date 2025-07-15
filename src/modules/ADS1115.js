@@ -1,14 +1,14 @@
 import ADS1115 from 'ads1115'
 import KalmanFilter from 'kalmanjs'
 
-export default async ({ device, poll, prop, entityClasses, log }) => {
+export default async ({ device, poll, prop, entityClasses, log, logError }) => {
   const dev = device('Texas Instruments', 'ADS1115', '1')
   const connection = prop('connection', { bus: 1, address: 0x48 })
   const values = prop('values', [])
   const sensor = await ADS1115.open(parseInt(connection.bus), connection.address, 'i2c-bus')
   const store = []
 
-  sensor.gain = 2
+  // sensor.gain = 1
 
   for (let i = 0; i < 4; ++i) {
     const value = values[i] || {}
@@ -37,7 +37,7 @@ export default async ({ device, poll, prop, entityClasses, log }) => {
         const data = store[i]
         
         let raw = await sensor.measure(i + '+GND')
-
+// log(i + '+GND', raw)
         if (data.filter) raw = data.filter.filter(raw).toFixed()
         
         const negative = raw < data.zero

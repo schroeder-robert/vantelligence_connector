@@ -44,7 +44,7 @@ try {
     const timeout = setTimeout(() => {
       logError('Config timeout')
       resolve({})
-    }, 10000)
+    }, 1000)
     
     subscribe(BASE_TOPIC, m => {
       clearTimeout(timeout)

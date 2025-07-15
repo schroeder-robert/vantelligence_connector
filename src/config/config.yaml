@@ -96,20 +96,28 @@ modules:
   - name: Akku
     id: battery
     type: JBD_BMS
+    connection:
+      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.1.4:1.0-port0
 
   - name: B2B-Laderegler
     id: booster
     type: Votronic_VCC_1212
+    connection:
+      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.4:1.0-port0
 
   - name: Solar-Laderegler
     id: solar
     type: Ective_DSC
+    connection:
+      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.2:1.0-port0
 
   - name: Dieselheizung
     id: heater
     type: Autoterm_Air_2D
     subscribe:
       temperature_current: connector/device/luftsensor/temperature/state
+    connection:
+      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.3:1.0-port0
 
   - name: Analogsensor
     id: analogsensor
@@ -117,13 +125,17 @@ modules:
     interval: 3000
     values:
       - name: A0
-        unit: L
-        class: water
+        filter: false
+        # unit: L
+        # class: water
       - name: A1
+        filter: false
       - name: A2
-        unit: L
-        class: water
+        filter: false
+        # unit: L
+        # class: water
       - name: A3
+        filter: false
 
   - name: I/O Expander
     id: gpio
