@@ -7,14 +7,16 @@ export default async ({ device, prop, stateValues, log, logError }) => {
   const dev = device('NXP', 'PCA9685', '1')
   const connection = prop('connection', { bus: 1, address: 0x40 })
   const channels = prop('channels', {})
-  const collection = []
-  
-  channels.forEach(channel => {
-    const data = { id: channel.id }
-    const id = 'channel' + channel.id
+  const collection = Array.from({ length: 16 }).map((v, i) => {
+    const channel = channels.find(c => i === c.id) || {}
+    const data = { id: i }
+    const id = 'channel' + i
     const name = channel.name || 'Channel #' + channel.id
 
-   if (channel.type === 'light') {
+   if (channel.type === 'switch') {
+      data.entity = dev.switch(id, name)
+      data.entity.state(stateValues.off)
+   } else if (channel.type === 'light') {
       data.entity = dev.light(id, name, { brightness: true, brightnessScale: LIGHT_BRIGHTNESS_SCALE })
     } else {
       data.min = channel.min || 0
@@ -23,7 +25,7 @@ export default async ({ device, prop, stateValues, log, logError }) => {
       data.entity = dev.number(id, name, { min: 0, max: data.scale })
     }
 
-    collection.push(data)
+    return data
   })
 
   try {
@@ -32,12 +34,17 @@ export default async ({ device, prop, stateValues, log, logError }) => {
         i2c: i2c.openSync(connection.bus),
         address: connection.address,
         frequency: 120,
-        debug: false
+        debug: true
       }, error => error ? reject(error) : resolve(driver))
     }))()
 
     collection.forEach(({ id, min, max, scale, entity }) => {
-      if (entity.get('type') === 'light') {
+      if (entity.get('type') === 'switch') {
+        entity.command(value => {
+          controller.setDutyCycle(id, value === stateValues.on ? 1 : 0)
+          entity.state(value)
+        })
+      } else if (entity.get('type') === 'light') {
         entity.command(value => {
           value = JSON.parse(value)
           
