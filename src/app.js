@@ -155,7 +155,7 @@ function device (config, manufacturer, model, version) {
   }
 }
 
-function entity (device, type, id, name, attributes) {
+function entity (device, type, id, name, attributes, calls = {}) {
   const data = {
     topic: topic(device.id, id),
     type,
@@ -203,7 +203,7 @@ function entity (device, type, id, name, attributes) {
   publish(data.topic, data)
   publishHomeAssistantDiscovery(device, data)
 
-  return {
+  const methods = {
     availability: function () { return availability(device, data, ...arguments) },
     state: function () { return state(device, data, 'state', ...arguments) },
     stateById: function () { return state(device, data, ...arguments) },
@@ -213,6 +213,14 @@ function entity (device, type, id, name, attributes) {
     get: function () { return get(data, ...arguments) },
     set: function () { return set(data, ...arguments) }
   }
+
+  if (Object.entries(calls).length) {
+    for (const key in calls) {
+      if (key in methods) methods[key](calls[key])
+    }
+  }
+
+  return methods
 }
 
 function get (entity, attribute) {
