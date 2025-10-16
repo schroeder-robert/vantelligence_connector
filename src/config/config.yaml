@@ -1,58 +1,118 @@
 modules:
-  # - name: Bluetooth
-  #   id: bluetooth
-  #   type: MadeByRob_Bluetooth
-  - name: Soundsystem
-    id: sound
-    type: Pulseaudio
-    connection:
-      socket:
-    controls:
-      - name: Main
-        id: Master
+  - name: OLED
+    id: oled
+    type: Oleddisplay
+
+  - name: Bluetooth
+    id: bluetooth
+    type: MadeByRob_Bluetooth
+
+  - name: WirePlumber
+    id: wireplumber
+    type: WirePlumber
     subscribe:
       mute: connector/device/canbus/front_panel_mute/state
       volume_down: connector/device/canbus/front_panel_volume_down/state
       volume_up: connector/device/canbus/front_panel_volume_up/state
 
+  # - name: Soundsystem
+  #   id: sound
+  #   type: Pulseaudio
+  #   connection:
+  #     socket:
+  #   controls:
+  #     - name: Main
+  #       id: Master
+  #   subscribe:
+  #     mute: connector/device/canbus/front_panel_mute/state
+  #     volume_down: connector/device/canbus/front_panel_volume_down/state
+  #     volume_up: connector/device/canbus/front_panel_volume_up/state
+
   - name: CAN-Bus
     id: canbus
     type: MadeByRob_Socketcan
 
-  - name: PWM-Controller
-    id: pwmcontroller
+  - name: Außenlichter
+    id: outer_lights
     type: PCA9685
     channels:
-      - name: Licht Schiebetür links
+      - name: Blinker vorne rechts
         id: 0
         type: light
-      - name: Licht Laderaum
+        scale: 255
+      - name: Positionslicht links
         id: 1
         type: light
-      - name: Licht Schiebetür rechts
+        scale: 255
+      - name: Blinker vorne links
         id: 2
         type: light
-      - name: Licht Dachluke
+        scale: 255
+      - name: Positionslicht rechts
         id: 3
         type: light
-      - name: Licht5
+        scale: 255
+      - name: Blinker hinten links
         id: 4
         type: light
+      - name: Rücklicht links
+        id: 5
+        type: light
+        scale: 255
+      - name: Blinker hinten rechts
+        id: 6
+        type: light
+        scale: 255
+      - name: Rücklicht rechts
+        id: 7
+        type: light
+        scale: 255
+      - name: Arbeitslicht rechts
+        id: 8
+        type: light
+      - name: Arbeitslicht links
+        id: 9
+        type: light
+      - name: Fernlicht rechts
+        id: 10
+        type: light
+      - name: Fernlicht links
+        id: 11
+        type: light
+
+  - name: Innenlichter
+    id: inner_lights
+    type: PCA9685
+    connection:
+      bus: 1
+      address: 0x60
+    channels:
       - name: Schubladenverrieglung
-        id: 14
+        id: 6
         min: 400
         max: 2600
         scale: 180
       - name: Kühlschrankverrieglung
-        id: 15
+        id: 7
         min: 400
         max: 2600
         scale: 180
-      - name: Test
-        id: 13
-        min: 0
-        max: 2600
-        scale: 2600
+      - name: Dachluke
+        id: 8
+        type: light
+        scale: 255
+      - name: Laderaum
+        id: 9
+        type: light
+        scale: 255
+      - name: Schiebetür rechts
+        id: 10
+        type: light
+        scale: 255
+      - name: Schiebetür links
+        id: 11
+        type: light
+        scale: 255
 
   - name: Temperatursensor
     id: temperatursensor
@@ -76,28 +136,11 @@ modules:
   #     mode_pin: 19
   #     data_pin: 26
 
-  # - name: Lichtsteuerung außen
-  #   id: lichtsteuerung_aussen
-  #   type: MadeByRob_Arduino
-  #   names:
-  #     - Fernlicht links
-  #     - Fernlicht rechts
-  #     - Arbeitslicht links
-  #     - Arbeitslicht rechts
-  #     - Blinker hinten links
-  #     - Positionslicht rechts
-  #     - Rücklicht rechts
-  #     - Blinker hinten rechts
-  #     - Rücklicht links
-  #     - Blinker vorne rechts
-  #     - Positionslicht links
-  #     - Blinker vorne links
-
-  - name: Akku
-    id: battery
-    type: JBD_BMS
-    connection:
-      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.1.4:1.0-port0
+  # - name: Akku
+  #   id: battery
+  #   type: JBD_BMS
+  #   connection:
+  #     port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.1.4:1.0-port0
 
   - name: B2B-Laderegler
     id: booster
@@ -137,6 +180,14 @@ modules:
       - name: A3
         filter: false
 
+  - name: Externer I/O Expander
+    id: external_gpio
+    type: MCP23017
+    connection:
+      bus: 1
+      address: 0x27
+    pins:
+
   - name: I/O Expander
     id: gpio
     type: MCP23017
@@ -153,16 +204,18 @@ modules:
         id: 2
         type: in
         inverted: true
-      - name: Input3
+      - name: Dachluke offen
+        key: dachluke_offen
         id: 3
-        type: in
-        inverted: true
-      - name: Input4
-        id: 4
         type: in
         inverted: true
       - name: Taster hinten
         key: taster_hinten
+        id: 4
+        type: in
+        inverted: true
+      - name: Schalter Dachluke
+        key: schalter_dachluke
         id: 5
         type: in
         inverted: true
@@ -188,20 +241,20 @@ modules:
         key: wasserpumpe
         id: 10
         type: out
-      - name: B2B Laderegler
-        key: b2b_laderegler
+      - name: Startsignal
+        key: startsignal
         id: 11
         type: out
       - name: Soundsystem
         key: soundsystem
         id: 12
         type: out
-      - name: Wechselrichter
-        key: wechselrichter
+      - name: Duschpumpe
+        key: duschpumpe
         id: 13
         type: out
-      - name: Kühlschrank
-        key: kuehlschrank
+      - name: Defekt
+        key: defekt
         id: 14
         type: out
       - name: Dashcam
@@ -220,19 +273,19 @@ modules:
         id: 36
         type: out
 
-  # - name: Bewegungssensor
-  #   id: bewegungssensor
-  #   type: MPU_6050
-  #   connection:
-  #     bus: 1
-  #     address: 0x69
-  #   axles:
-  #     x:
-  #       map: x
-  #       flip: false
-  #     y:
-  #       map: y
-  #       flip: false
-  #     z:
-  #       map: z
-  #       flip: false
+#  - name: Bewegungssensor
+#    id: bewegungssensor
+#    type: MPU_6050
+#    connection:
+#      bus: 1
+#      address: 0x69
+#    axles:
+#      x:
+#        map: x
+#        flip: false
+#      y:
+#        map: y
+#        flip: false
+#      z:
+#        map: z
+#        flip: false
