@@ -8,7 +8,7 @@ const ICONS = {
   volumeMute: 'mdi:volume-mute'
 }
 
-export default async ({ device, poll, on, prop, log, logError }) => {
+export default async ({ device, poll, on, prop, log, logError, stateValues }) => {
   const dev = device('Raspberry Pi', 'Pulseaudio', '1')
   const connection = prop('connection', { socket: '/run/audio/pulse.sock' })
   
@@ -23,9 +23,13 @@ export default async ({ device, poll, on, prop, log, logError }) => {
     const sink = dev.select('sink', 'Sink')
 
     const muteCommand = value => {
-      client.setSinkMute(value === 'ON')
-      mute.state(value)
-      volumePercent.set('icon', volumeIcon(volumePercent.state(), value === 'ON'))
+      if (value !== stateValues.on) return
+      
+      const state = mute.state() === stateValues.on ? false : true
+
+      client.setSinkMute(state)
+      mute.state(state ? stateValues.on : stateValues.off)
+      volumePercent.set('icon', volumeIcon(volumePercent.state(), state))
       volumePercent.update()
     }
     mute.command(muteCommand)
@@ -33,7 +37,7 @@ export default async ({ device, poll, on, prop, log, logError }) => {
     const volumePercentCommand = value => {
       client.setSinkVolume(percentToVolume(value))
       volumePercent.state(value)
-      volumePercent.set('icon', volumeIcon(value, mute.state()))
+      volumePercent.set('icon', volumeIcon(value, mute.state() === stateValues.on))
       volumePercent.update()
     }
     volumePercent.command(volumePercentCommand)
@@ -52,10 +56,10 @@ export default async ({ device, poll, on, prop, log, logError }) => {
 
     on('mute', muteCommand)
     on('volume_down', value => {
-      if (value === 'ON') volumePercentCommand(parseInt(volumePercent.state()) - 2)
+      if (value === stateValues.on) volumePercentCommand(parseInt(volumePercent.state()) - 2)
     })
     on('volume_up', value => {
-      if (value === 'ON') volumePercentCommand(parseInt(volumePercent.state()) + 2)
+      if (value === stateValues.on) volumePercentCommand(parseInt(volumePercent.state()) + 2)
     })
     
     poll(5000, async () => {
