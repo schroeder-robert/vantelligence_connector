@@ -125,7 +125,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
     status.state(STATUS_OPTIONS[code] || code)
     voltage.state(buffer.readUInt8(6) / 10)
     temperatureIntake.state(buffer.readInt8(3))
-    temperatureSensor.state(buffer.readInt8(4))
+    temperatureSensor.state(buffer.readUInt8(4))
     temperatureHeatExchanger.state(buffer.readUInt8(8) - 15)
     fanRpmSpecified.state(buffer.readUInt8(11) * 60)
     fanRpmActual.state(buffer.readUInt8(12) * 60)
