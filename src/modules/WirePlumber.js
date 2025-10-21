@@ -38,15 +38,12 @@ export default ({ device, poll, prop, on, stateValues, entityClasses, entityUnit
     mute.state(getVolume().mute ? stateValues.on : stateValues.off)
   }
 
-  on('mute', () => {
+  on('mute', (value) => {
     if (value === stateValues.on) toggleMute()
   })
 
-  on('volume_down', value => {
-    if (value === stateValues.on) changeVolume('2%-')
-  })
-  on('volume_up', value => {
-    if (value === stateValues.on) changeVolume('2%+')
+  on('volume', (value) => {
+    if (value !== 0) changeVolume(Math.abs(value) + '%' + (value > 0 ? '+' : '-'))
   })
 
   poll(1000, () => {

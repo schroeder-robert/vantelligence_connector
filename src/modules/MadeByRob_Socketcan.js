@@ -76,8 +76,7 @@ export default ({ device, poll, prop, entityUnits, log, logError }) => {
   const gpsTime = dev.sensor('gps_time', 'GPS Time', { class: 'date' })
   const gpsTracker = dev.tracker('gps', 'GPS', { icon: 'mdi:map-marker' })
   const engineRpm = dev.sensor('engine_rpm', 'Engine RPM', { icon: 'mdi:engine', unit: entityUnits.rpm })
-  const frontPanelVolumeDown = dev.binarySensor('front_panel_volume_down', 'Front Panel Volume Down')
-  const frontPanelVolumeUp = dev.binarySensor('front_panel_volume_up', 'Front Panel Volume Up')
+  const frontPanelVolume = dev.sensor('front_panel_volume', 'Front Panel Volume')
   const frontPanelButtons = {}
   const steeringWheelButtons = {}
   const other = {}
@@ -110,8 +109,7 @@ export default ({ device, poll, prop, entityUnits, log, logError }) => {
           } else if (id < 255 && signal.name === 'Action') {
             frontPanelButtons[id].state(signal.value == 16 ? 'ON' : 'OFF')
           } else if (signal.name === 'Direction') {
-            frontPanelVolumeDown.state(signal.value == 29 ? 'ON' : 'OFF')
-            frontPanelVolumeUp.state(signal.value == 31 ? 'ON' : 'OFF')
+            frontPanelVolume.state(signal.value - 30)
           }
 
           // console.log(key, signal.name, signal.value)
