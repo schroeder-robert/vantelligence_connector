@@ -3,17 +3,16 @@ modules:
     id: oled
     type: Oleddisplay
 
-  - name: Bluetooth
-    id: bluetooth
-    type: MadeByRob_Bluetooth
+  # - name: Bluetooth
+  #   id: bluetooth
+  #   type: MadeByRob_Bluetooth
 
   - name: WirePlumber
     id: wireplumber
     type: WirePlumber
     subscribe:
       mute: connector/device/canbus/front_panel_mute/state
-      volume_down: connector/device/canbus/front_panel_volume_down/state
-      volume_up: connector/device/canbus/front_panel_volume_up/state
+      volume: connector/device/canbus/front_panel_volume/state
 
   # - name: Soundsystem
   #   id: sound
