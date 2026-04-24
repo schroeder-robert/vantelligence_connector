@@ -29,12 +29,7 @@ export default async ({ device, poll, prop, createSerialConnection, log, logErro
 
   poll(3000, async () => {
     const buffer = await sendSerial([255, 226, 2, 228])
-    const values = []
 
-    for (let i = 1; i < buffer.length; i += 2) {
-      values.push([map[i], buffer.readUInt16BE(i)])
-    }
-    
     switch (REGISTERS[buffer.readUInt8(0)]) {
       case 'status':
         if (buffer.length < 38) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 38', 'Got: ' + buffer.length)
