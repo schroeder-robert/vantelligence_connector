@@ -18,7 +18,7 @@ function connect () {
     ws.addEventListener('message', e => {
       const data = JSON.parse(e.data)
 
-      if (data.response && data.response in callbacks) callbacks[data.response](data)
+      if (data.response && data.response in callbacks) callbacks[data.response](data.value)
     })
   })
 }

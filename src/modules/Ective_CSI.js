@@ -1,197 +1,36 @@
-import { pigpio } from 'pigpio-client'
-
-const MODE_OPTIONS = [
-  'ECO',
-  'USP'
-]
-
-let POWER_PIN = null
-let MODE_PIN = null
-let DATA_PIN = null
-
-export default ({ device, poll, config }) => {
-  const dev = device('Ective', 'CSI', '1')
+const MODE_OPTIONS = {
+  0x00: 'OFF',
+  0x01: 'UPS',
+  0x02: 'ECO'
 }
 
-export const device = class extends base {
-  constructor (config) {
-    super(info, config)
-    
-    this.buffer = []
-    this.timeout = null
-    this.port = null
-  }
+export default ({ device, prop, createSerialConnection, entityUnits, stateValues }) => {
+  const dev = device('Ective', 'CSI', '1')
+  const connection = prop('connection', { port: '/dev/serial/by-id/' + prop('id') })
+  const mode = dev.select('mode', 'Mode', { options: MODE_OPTIONS }, { state: 0, command: (state) => sendSerial([parseInt(state)]) })
+  const load = dev.sensor('load', 'Load', { unit: entityUnits.percent })
+  const bit1 = dev.binarySensor('bit_1', 'Bit #1', null, { state: stateValues.off })
+  const bypass = dev.binarySensor('bypass', 'Bypass', null, { state: stateValues.off })
+  const inverter = dev.binarySensor('inverter', 'Inverter', null, { state: stateValues.off })
+  const acCharge = dev.binarySensor('ac_charge', 'AC Charge', null, { state: stateValues.off })
+  const acIn = dev.binarySensor('ac_in', 'AC In', null, { state: stateValues.off })
+  const fault = dev.binarySensor('fault', 'Fault', null, { state: stateValues.off })
+  const solarCharge = dev.binarySensor('solar_charge', 'Solar Charge', null, { state: stateValues.off })
+  const error = dev.binarySensor('error', 'Error', null, { state: stateValues.off })
 
-  async connect () {
-    const client = pigpio({ host: 'localhost' })
-    const ready = new Promise((resolve, reject) => {
-      client.once('connected', resolve)
-      client.once('error', reject)
-    })
+  // communication
+  const sendSerial = createSerialConnection({ path: connection.port, baudRate: 9600 }, null, (buffer) => {
+    const bits = buffer.readUInt8(1)
 
-    ready.then(async (info) => {
-      const { connection } = this.config
-
-      if (connection.type === 'pins') {
-        const emitPower = state => {
-          this.emitEntity({
-            type: 'switch',
-            name: 'Power',
-            key: 'power',
-            commands: ['command'],
-            states: {
-              state: state === 1 ? 'ON' : 'OFF'
-            }
-          })
-
-          if (!state) {
-            this.processMessage([false, false, false, false, false, false, false, false])
-          }
-        }
-
-        POWER_PIN = client.gpio(connection.power_pin)
-        POWER_PIN.modeSet('output')
-        POWER_PIN.notify(emitPower)
-        POWER_PIN.write(0)
-
-        emitPower(0)
-
-        const emitMode = state => {
-          this.emitEntity({
-            type: 'select',
-            name: 'Modus',
-            key: 'mode',
-            options: MODE_OPTIONS,
-            commands: ['command'],
-            states: {
-              state: MODE_OPTIONS[state]
-            }
-          })
-        }
-
-        MODE_PIN = client.gpio(connection.mode_pin)
-        MODE_PIN.modeSet('output')
-        MODE_PIN.notify(emitMode)
-        MODE_PIN.write(0)
-
-        emitMode(0)
-
-        let last = 0
-        let data = []
-
-        DATA_PIN = client.gpio(connection.data_pin)
-        DATA_PIN.modeSet('input')
-        
-          //edge: Gpio.RISING_EDGE
-
-        DATA_PIN.pullUpDown(2)
-        DATA_PIN.glitchSet(10000)
-        DATA_PIN.notify((state, tick) => {
-          if (state) {
-            const value = tick - last
-            // console.log(value, state)
-            if (value > 90000) {
-              if (data.length) {
-                this.processMessage(data)
-              }
-
-              data = []
-            } else {
-              data.push(value < 70000)
-            }
-
-            last = tick
-          }
-        })
-      } else {
-        return 'Unknown connection type!'
-      }
-    }).catch(console.error)
-  }
-
-  setPower (state) {
-    POWER_PIN.write(state === 'ON' ? 1 : 0)
-  }
-
-  setMode (state) {
-    MODE_PIN.write(parseInt(state))
-  }
-
-  processMessage (data) {
-    if (!data || !data.length) {
-      return
-    }
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Bit #1',
-      key: 'bit_1',
-      states: {
-        state: data[0] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Bypass',
-      key: 'bypass',
-      states: {
-        state: data[1] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Inverter',
-      key: 'inverter',
-      states: {
-        state: data[2] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'AC Charge',
-      key: 'ac_charge',
-      states: {
-        state: data[3] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'AC In',
-      key: 'ac_in',
-      states: {
-        state: data[4] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Fault',
-      key: 'fault',
-      states: {
-        state: data[5] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Solar Charge',
-      key: 'solar_charge',
-      states: {
-        state: data[6] ? 'ON' : 'OFF'
-      }
-    })
-
-    this.emitEntity({
-      type: 'binary_sensor',
-      name: 'Error 2',
-      key: 'error_2',
-      states: {
-        state: data[7] ? 'ON' : 'OFF'
-      }
-    })
-  }
+    mode.state(buffer.readUInt8(0))
+    load.state(buffer.readUInt16BE(2))
+    error.state(bits & 1 ? stateValues.on : stateValues.off)
+    bit1.state((bits >> 1) & 1 ? stateValues.on : stateValues.off)
+    bypass.state((bits >> 2) & 1 ? stateValues.on : stateValues.off)
+    inverter.state((bits >> 3) & 1 ? stateValues.on : stateValues.off)
+    acCharge.state((bits >> 4) & 1 ? stateValues.on : stateValues.off)
+    acIn.state((bits >> 5) & 1 ? stateValues.on : stateValues.off)
+    fault.state((bits >> 6) & 1 ? stateValues.on : stateValues.off)
+    solarCharge.state((bits >> 7) & 1 ? stateValues.on : stateValues.off)
+  })
 }

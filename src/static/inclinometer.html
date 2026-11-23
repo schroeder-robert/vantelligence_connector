@@ -11,7 +11,7 @@
       const labelRear = document.querySelector('.axels div:nth-child(2) span')
       const labelSide = document.querySelector('.axels div:nth-child(3) span')
 
-      on('connector/device/bewegungssensor/tilt_x/state', value => {
+      on('connector/device/bewegungssensor/tilt_x/state', value => {console.log('x', value)
         style.setProperty('--tilt-x-mirror', value * -1 + 'deg')
         style.setProperty('--tilt-x', value + 'deg')
 
@@ -19,7 +19,7 @@
         labelRear.innerHTML = (value * -1) + '&deg;'
       })
 
-      on('connector/device/bewegungssensor/tilt_y/state', value => {
+      on('connector/device/bewegungssensor/tilt_y/state', value => {console.log('y', value)
         style.setProperty('--tilt-y', value + 'deg')
         labelSide.innerHTML = value + '&deg;'
       })
@@ -85,7 +85,7 @@
       }
 
       .axels > div:nth-child(1) > div {
-        transform: rotate(var(--tilt-x));
+        transform: rotate(var(--tilt-x-mirror));
       }
 
       .axels > div:nth-child(1) > div::before {
@@ -93,7 +93,7 @@
       }
 
       .axels > div:nth-child(2) > div {
-        transform: rotate(var(--tilt-x-mirror));
+        transform: rotate(var(--tilt-x));
       }
 
       .axels > div:nth-child(2) > div::before {
@@ -129,6 +129,7 @@
         bottom: 0;
         transform: translate(-50%, 30%);
         padding-right: 3%;
+        user-select: none;
       }
 
     </style>

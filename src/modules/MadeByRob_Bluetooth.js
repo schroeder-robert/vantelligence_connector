@@ -1,4 +1,3 @@
-import base from './base.js'
 import { spawn, spawnSync } from 'node:child_process'
 
 const ICONS = {
@@ -6,354 +5,212 @@ const ICONS = {
   phone: 'mdi:cellphone',
 }
 
-export default ({ device, poll, config }) => {
-  const dev = device('MadeByRob', 'Bluetooth', '1')
+const SOURCE_OPTIONS = {
+  '-': '-'
 }
 
-export const device = class extends base {
-  constructor (config) {
-    super(info, config)
+export default ({ device, poll, stateValues, wait, config }) => {
+  let sources = []
+  let selected = null
+  
+  const bt = device('MadeByRob', 'Bluetooth', '1')
+  const status = bt.sensor('status', 'Status', {}, { state: 'starting' })
+
+  const buttonConnect = bt.button('connect', 'Connect', { icon: 'mdi:bluetooth-connect' }, { availability: 'offline', command: () => {
+    // if (!this.selected?.id) return
+    // console.log('!')
+    //   setDisconnect()
+    status.state('connecting')
     
-    this.devices = []
-    this.device = null
+    //   let output = ''
+    
+    //   for (let i = 0; i < 3; ++i) {
+        const output = request('connect', selected.id)
+
+
+        
+        console.log('+++++++++++++++++', output.toString())
+    
+    //     if (output.some(r => r.startsWith('[NEW]'))) {
+    //       break
+    //     }
+    
+    //     await wait(1000)
+    
+    //   }
+      
+    //   getPlayer()
+  } })
+
+  const buttonDisconnect = bt.button('disconnect', 'Disconnect', { icon: 'mdi:bluetooth-off'}, { availability: 'offline', command: () => request('disconnect', sourceAddress.state()) })
+
+  const sourceSelect = (state) => {
+    const source = getSources().find(d => d.id === state)
+
+    if (source) {
+      selected = source
+      sourceList.state(state)
+      buttonConnect.availability('online')
+    } else {
+      selected = null
+      sourceList.state('-')
+      buttonConnect.availability('offline')
+    }
+  }
+
+  const sourceList = bt.select('source_list', 'Source list', { options: SOURCE_OPTIONS }, { command: sourceSelect })
+
+  sourceSelect(sourceList.state())
+  
+  const sourceName = bt.sensor('source_name', 'Source name')
+  const sourceType = bt.sensor('source_type', 'Source type')
+  const sourceAddress = bt.sensor('source_address', 'Source address')
+  const sourceClass = bt.sensor('source_class', 'Source class')
+  const sourceTrusted = bt.binarySensor('source_trusted', 'Source trusted')
+  
+  // player
+  const playerStatus = bt.sensor('player_status', 'Player status')
+  const playerPosition = bt.sensor('player_position', 'Player position')
+  const playerDuration = bt.sensor('player_duration', 'Player duration')
+  const playerArtist = bt.sensor('player_artist', 'Player artist')
+  const playerTitle = bt.sensor('player_title', 'Player title')
+  const playerAlbum = bt.sensor('player_album', 'Player album')
+  const playerShuffle = bt.sensor('player_shuffle', 'Player shuffle')
+  const playerRepeat = bt.sensor('player_repeat', 'Player repeat')
+  const playerCommand = async (call) => {
+    request('player.' + call)
+    // await wait(500)
+    //playerUpdate()
+  }
+  const buttons = {
+    play: bt.button('player_play', 'Player play', { icon: 'mdi:play'}, { command: () => playerCommand('play') }),
+    pause: bt.button('player_pause', 'Player pause', { icon: 'mdi:pause'}, { command: () => playerCommand('pause') }),
+    stop: bt.button('player_stop', 'Player stop', { icon: 'mdi:stop'}, { command: () => playerCommand('stop') }),
+    next: bt.button('player_next', 'Player next', { icon: 'mdi:skip-next'}, { command: () => playerCommand('next') }),
+    previous: bt.button('player_previous', 'Player previous', { icon: 'mdi:skip-previous'}, { command: () => playerCommand('previous') }),
+    forward: bt.button('player_fast_forward', 'Player fast forward', { icon: 'mdi:fast-forward'}, { command: () => playerCommand('fast-forward') }),
+    rewind: bt.button('player_rewind', 'Player rewind', { icon: 'mdi:rewind'}, { command: () => playerCommand('rewind') }),
+    repeat: bt.button('player_repeat', 'Player repeat', { icon: 'mdi:repeat'}, { command: () => playerCommand('repeat') }),
+    shuffle: bt.button('player_shuffle', 'Player shuffle', { icon: 'mdi:shuffle'}, { command: () => playerCommand('shuffle') })
+  }
+
+  const playerUpdate = () => {
+    if (request('player.list').length) {
+      const data = parseInfo(request('player.show'))
+      // console.log(data)
+      const position = parseInt(data.position.split(' ')[0]) / 1000
+      const duration = parseInt((data['track.duration'] || '').split(' ')[0]) / 1000
+
+      playerStatus.state(data.status)
+      playerPosition.state(Math.floor(position / 60) + ':' + String(Math.round(position % 60)).padStart(2, '0'))
+      playerDuration.state(Math.floor(duration / 60) + ':' + String(Math.round(duration % 60)).padStart(2, '0'))
+      playerArtist.state(data['track.artist'])
+      playerTitle.state(data['track.title'])
+      playerAlbum.state(data['track.album'])
+      playerShuffle.state(data.shuffle)
+      playerRepeat.state(data.repeat)
+      status.state('connected')
+      Object.values(buttons).forEach(b => b.availability('online'))
+    } else {
+      playerStatus.state('')
+      playerPosition.state('')
+      playerDuration.state('')
+      playerArtist.state('')
+      playerTitle.state('')
+      playerAlbum.state('')
+      playerShuffle.state('')
+      playerRepeat.state('')
+      Object.values(buttons).forEach(b => b.availability('offline'))
+    }
+  }
+
+  poll(1000, () => playerUpdate())
+    
+  poll(5000, () => {
+    const output = request('info')
+// console.log(output)
+    if (output[0].startsWith('Device ')) {
+      const source = parseInfo(output)
+// console.log(source)
+      sourceName.state(source.name)
+      sourceType.state(source.icon)
+      sourceAddress.state(source.id)
+      sourceClass.state(source.class)
+      sourceTrusted.state(source.trusted === 'on' ? stateValues.on : stateValues.off)
+
+      status.state('connected')
+      // buttonConnect.availability('offline')
+      buttonDisconnect.availability('online')
+    } else {
+      sourceName.state('')
+      sourceType.state('')
+      sourceAddress.state('')
+      sourceClass.state('')
+      sourceTrusted.state(stateValues.off)
+
+      status.state('disconnected')
+      // buttonConnect.availability('online')
+      buttonDisconnect.availability('offline')
+    }
+
+
+    sources = getSources()
+    sourceList.set('options', { ...SOURCE_OPTIONS, ...Object.fromEntries(sources.map(d => ([d.id, d.name]))) })
+    sourceList.update()
+    // getPlayer()
+  })
+}
+
+function getPlayer () {
+  let connected = false
+  
+
+  
+  if (!connected) {
+    host = null
     this.player = null
-    this.selected = null
-    this.status = ''
+    setStatus('disconnected')
   }
 
-  async connect () {
-    this.poll(5000, () => {
-      this.getAudioDevices()
-      this.getPlayer()
-    })
+  // console.log('CURRENT', host?.name)
 
-    this.setStatus('start')
-    this.emitButtons()
-  }
 
-  emitButtons () {
-    const availability = this.device === null ? 'offline' : 'online'
+}
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Connect',
-      key: 'connect',
-      icon: 'mdi:bluetooth-connect',
-      availability: this.selected === null ? 'offline' : 'online',
-      commands: ['command'],
-      states: { state: '' }
-    })
+function getSources () {
+  return getDevices().filter(d => 'uuid' in d && 'Audio Source' in d.uuid)
+}
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Disonnect',
-      key: 'disconnect',
-      icon: 'mdi:bluetooth-off',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
+function getDevices () {
+  return request('devices | cut -d " " -f 2').map(id => parseInfo(request('info', id)))
+}
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Media previous',
-      key: 'media_previous',
-      icon: 'mdi:skip-previous',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
+function parseInfo (rows) {
+  const data = { id: rows[0].split(' ', 2)[1] }
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Media play',
-      key: 'media_play',
-      icon: 'mdi:play',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
+  rows.slice(1).forEach(r => {
+    let [key, value] = r.split(': ')
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Media pause',
-      key: 'media_pause',
-      icon: 'mdi:pause',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
+    if (key === 'UUID') {
+      const values = data.uuid || {}
+      const p = value.slice(0, -1).split(' (')
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Media stop',
-      key: 'media_stop',
-      icon: 'mdi:stop',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
+      values[p[0].trim()] = p[1].trim()
 
-    this.emitEntity({
-      type: 'button',
-      name: 'Media next',
-      key: 'media_next',
-      icon: 'mdi:skip-next',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
-
-    this.emitEntity({
-      type: 'button',
-      name: 'Media fast forward',
-      key: 'media_fast_forward',
-      icon: 'mdi:fast-forward',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
-
-    this.emitEntity({
-      type: 'button',
-      name: 'Media rewind',
-      key: 'media_rewind',
-      icon: 'mdi:rewind',
-      availability,
-      commands: ['command'],
-      states: { state: '' }
-    })
-  }
-
-  emitDevices () {
-    const options = { '-': '-' }
-
-    this.devices.forEach(d => options[d.address] = d.name)
-    this.emitEntity({
-      type: 'select',
-      name: 'Device',
-      key: 'device',
-      options,
-      commands: ['command'],
-      states: { state: this.selected?.name || '-' }
-    })
-  }
-
-  getPlayer () {
-    let connected = false
-    
-    if (this.request('player.list').length) {
-      const output = this.request('info')
-
-      if (output[0].startsWith('Device ')) {
-        this.device = this.parseDeviceInfo(output)
-        this.player = this.parsePlayerInfo(this.request('player.show'))
-        this.setStatus('connected')
-
-        connected = true
-      }
-    }
-    
-    if (!connected) {
-      this.device = null
-      this.player = null
-      this.setStatus('disconnected')
+      value = values
     }
 
-    // console.log('CURRENT', this.device?.name)
-
-    this.emitEntity({
-      name: 'Device name',
-      key: 'device_name',
-      states: { state: this.device?.name || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Device type',
-      key: 'device_type',
-      icon: ICONS[this.device?.icon] || 'mdi:close',
-      states: { state: this.device?.icon || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Device address',
-      key: 'device_address',
-      states: { state: this.device?.address || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Device class',
-      key: 'device_class',
-      states: { state: this.device?.class || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Device trusted',
-      key: 'device_trusted',
-      type: 'binary_sensor',
-      states: { state: this.device?.trusted ? 'ON' : 'OFF' }
-    })
+    if (value === 'yes' || value === 'on') value = true
+    if (value === 'no' || value === 'off') value = false
     
-    // console.log(this.player)
+    data[key.toLowerCase()] = value
+  })
 
-    this.emitEntity({
-      name: 'Player artist',
-      key: 'player_artist',
-      states: { state: this.player?.artist || '-' }
-    })
+  return data
+}
 
-    this.emitEntity({
-      name: 'Player title',
-      key: 'player_title',
-      states: { state: this.player?.title || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Player album',
-      key: 'player_album',
-      states: { state: this.player?.album || '-' }
-    })
-
-    this.emitEntity({
-      name: 'Player shuffle',
-      key: 'player_shuffle',
-      type: 'binary_sensor',
-      states: { state: this.device?.shuffle === 'on' ? 'ON' : 'OFF' }
-    })
-
-    this.emitEntity({
-      name: 'Player repeat',
-      key: 'player_repeat',
-      type: 'binary_sensor',
-      states: { state: this.device?.repeat === 'on' ? 'ON' : 'OFF' }
-    })
-
-    this.emitDevices()
-    this.emitButtons()
-  }
-
-  getAudioDevices () {
-    this.devices = this.getAllDevices().filter(d => 'Audio Source' in d.uuid)
-
-    this.emitDevices()
-  }
-
-  getAllDevices () {
-    return this.request('devices | cut -d " " -f 2').map(r => this.getDeviceDetails(r))
-  }
-
-  getDeviceDetails (address) {
-    return this.parseDeviceInfo(this.request('info', address))
-  }
-
-  parsePlayerInfo (rows) {
-    const data = {}
-
-    rows.slice(1).forEach(r => {
-      const parts = r.split(' ')
-
-      data[parts[0][0].toLowerCase() + parts[0].slice(1).replace(/:$/, '')] = parts.slice(1).join(' ')
-    })
-
-    return data
-  }
-
-  parseDeviceInfo (rows) {
-    const data = { address: rows[0].split(' ', 2)[1] }
-
-    rows.slice(1).forEach(r => {
-      let [key, value] = r.split(': ')
-
-      if (key === 'UUID') {
-        const values = data.uuid || {}
-        const p = value.slice(0, -1).split(' (')
-
-        values[p[0].trim()] = p[1].trim()
-
-        value = values
-      }
-
-      if (value === 'yes') value = true
-      if (value === 'no') value = false
-      
-      data[key.toLowerCase()] = value
-    })
-
-    return data
-  }
-
-  setStatus (state) {
-    // console.log('STAT', state)
-    this.status = state
-    this.emitEntity({
-      name: 'Status',
-      key: 'status',
-      states: { state }
-    })
-  }
-
-  setDevice (state) {
-    this.selected = this.devices.find(d => d.address === state) || null
-    console.log('SET', state, this.selected?.name)
-    this.emitButtons()
-    this.emitDevices()
-  }
-
-  async setConnect () {
-    if (!this.selected?.address) return
-console.log('!')
-    this.setDisconnect()
-    this.setStatus('connecting')
-
-    let output = ''
-
-    for (let i = 0; i < 3; ++i) {
-      output = this.request('connect', this.selected.address)
-      
-      console.log(output.toString())
-
-      if (output.some(r => r.startsWith('[NEW]'))) {
-        break
-      }
-
-      await this.wait(1000)
-
-    }
-    
-    this.getPlayer()
-  }
-
-  setDisconnect () {
-    if (!this.device?.address) return
-    
-    this.setStatus('disconnecting')
-    this.request('disconnect', this.device.address)
-    this.getPlayer()
-  }
-
-  setMediaNext () {
-    this.request('player.next')
-  }
-
-  setMediaPause () {
-    this.request('player.pause')
-  }
-
-  setMediaPlay () {
-    this.request('player.play')
-  }
-
-  setMediaPrevious () {
-    this.request('player.previous')
-  }
-
-  setMediaStop () {
-    this.request('player.stop')
-  }
-
-  request () {
-    const result = spawnSync('bash', ['-c', 'bluetoothctl ' + Object.values(arguments).join(' ')]).stdout.toString().trim()
-    
-    return result ? result.split(/\n\t?/) : []
-  }
+function request () {
+  const result = spawnSync('bash', ['-c', 'bluetoothctl ' + Object.values(arguments).join(' ')]).stdout.toString().trim()
+  
+  return result ? result.split(/\n\t?/) : []
 }

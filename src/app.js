@@ -5,10 +5,9 @@ import YAML from 'yaml'
 import http from 'http'
 import url from 'url'
 import path from 'path'
-import { entityCategories, entityClasses, entityUnits, stateValues } from './maps.js'
+import { poll, wait, convertKeyToMethod, convertNameToKey, createSerialConnection, getSerialDevices, log, logError } from './helpers.js'
+import * as maps from './maps.js'
 import { WebSocketServer } from 'ws'
-import { SerialPort } from 'serialport'
-import { InterByteTimeoutParser } from '@serialport/parser-inter-byte-timeout'
 
 const MQTT_HOST = process.env.CONNECTOR_MQTT_HOST || 'localhost'
 const MQTT_PORT = process.env.CONNECTOR_MQTT_PORT || 1883
@@ -25,6 +24,7 @@ const HA_BASE_TOPIC = 'homeassistant'
 const modulePath = './modules/'
 const valueStore = {}
 const callbackStore = {}
+const onStore = {}
 const websocketStore = []
 
 let mqttClient
@@ -38,7 +38,7 @@ try {
 
   fullConfig = YAML.parse(String(fs.readFileSync(CONFIG_FILE)))
   mqttClient = connectMqtt(MQTT_HOST, MQTT_PORT, MQTT_USERNAME, MQTT_PASSWORD)
-  startHttp()
+  startHttp(8066)
 
   mqttConfig = await (() => new Promise(resolve => {
     const timeout = setTimeout(() => {
@@ -110,13 +110,10 @@ async function init (config) {
       mqttConfig,
       configAdd,
       configRemove,
-      stateValues,
-      entityClasses,
-      entityCategories,
-      entityUnits
+      ...maps
     })
 
-    log(logPrefix, 'Created ' + config.type + ' instance:', config.name)
+    log(logPrefix, 'New <' + config.type + '> instance')
   } catch (error) {
     logError(logPrefix, 'Module init error:', error)
   }
@@ -168,12 +165,12 @@ function entity (device, type, id, name, attributes, calls = {}) {
 
   switch (type) {
     case 'sensor':
-      data.class = attributes?.class || entityClasses[id]
+      data.class = attributes?.class || maps.entityClasses[id]
       data.unit = {
-        [entityClasses.temperature]: entityUnits.celsius,
-        [entityClasses.illuminance]: entityUnits.lx,
-        [entityClasses.voltage]: entityUnits.volt,
-        [entityClasses.current]: entityUnits.ampere
+        [maps.entityClasses.temperature]: maps.entityUnits.celsius,
+        [maps.entityClasses.illuminance]: maps.entityUnits.lx,
+        [maps.entityClasses.voltage]: maps.entityUnits.volt,
+        [maps.entityClasses.current]: maps.entityUnits.ampere
       }[data.class]
 
       break
@@ -270,159 +267,18 @@ function topic () {
 }
 
 function on (config, key, callback) {
-  if (!('subscribe' in config && key in config.subscribe)) return
+  if ('subscribe' in config && key in config.subscribe) {
+    // subscribe(config.subscribe[key], callback)
+    const topic = config.subscribe[key]
 
-  subscribe(config.subscribe[key], callback)
-}
+    if (!(topic in onStore)) onStore[topic] = []
 
-async function poll (logPrefix, time, method, interval) {
-  let id
-
-  if (typeof method === 'function') {
-    let cycle = 0
-    const call = async () => {
-      try {
-        await method(cycle++)
-      } catch (e) {
-        logError(logPrefix, 'Poll /', e)
-      }
-
-      if (!interval) {
-        id = setTimeout(call, time)
-      }
-    }
-
-    if (!!interval) {
-      id = setInterval(call, time)
-    }
-    
-    call()
-  }
-
-  return {
-    stop () {
-      if (id) {
-        !interval ? clearTimeout(id) : clearInterval(id)
-      }
-    }
+    onStore[topic].push(callback)
   }
 }
 
-async function wait (time) {
-  return new Promise(resolve => setTimeout(resolve, time))
-}
-
-function convertKeyToMethod (value) {
-  return String(value).replace(/((^|[_])[a-z])/ig, match => match.toUpperCase().replace('_', ''))
-}
-
-function convertNameToKey (value) {
-  return String(value).toLowerCase().replace(/[ ]/g, '_')
-}
-
-function createSerialConnection (logPrefix, options, parser, callback) {
-  let port = null
-  let pipe = null
-
-  const connect = () => {
-    log(logPrefix, 'Connectiong to serial device:', options.path)
-
-    port = new SerialPort(Object.assign({ autoOpen: false }, options))
-    port.open(error => {
-      if (error) {
-        logError(logPrefix, error.message)
-        log(logPrefix, 'Retrying in 10s')
-        
-        setTimeout(connect, 10000)
-      } else {
-        log(logPrefix, 'Serial connection successful')
-      }
-    })
-    port.on('error', error => logError(error.message))
-    port.on('close', () => {
-      logError(logPrefix, 'Lost connection!')
-      
-      connect()
-    })
-
-    pipe = port.pipe(parser || new InterByteTimeoutParser({ interval: 100 }))
-    
-    if (typeof callback === 'function') {
-      pipe.on('data', callback)
-    }
-  }
-
-  connect()
-
-  return function (bytes) {
-    return new Promise((resolve, reject) => {
-
-      try {
-        let timeout = setTimeout(() => reject('request timeout'), 3000)
-
-        pipe.once('data', data => {
-          clearTimeout(timeout)
-          resolve(data)
-        })
-
-        port.write(Buffer.from(bytes), error => {
-          if (error) {
-            logError(logPrefix, error)
-  
-            reject('error')
-          } else {
-            clearTimeout(timeout)
-            timeout = setTimeout(() => reject('response timeout'), 3000)
-          }
-        })
-      } catch (e) {
-        console.log(e)
-
-        reject('catch')
-      }
-    })
-  }
-}
-
-function getSerialDevices () {
-  return new Promise(resolve => {
-    const path = '/dev/serial/by-path'
-
-    fs.readdir(path, async (error, files) => {
-      if (error) {
-        return logError(error)
-      }
-
-      resolve(Object.fromEntries(files.map(f => [path + '/' + f, path + '/' + f])))
-    })
-  })
-}
-
-function log () {
-  const args = Array.from(arguments)
-  const types = {
-    info: '\x1b[37m%s\x1b[0m',
-    error: '\x1b[31m%s\x1b[0m',
-    warn: '\x1b[33m%s\x1b[0m'
-  }
-
-  let type = 'info'
-
-  if (args[0] in types) {
-    type = args[0]
-    args.shift()
-  }
-
-  console.log(types[type], '[' + (new Date()).toISOString() + ']', '[ ' + type.toUpperCase() + ' ]', ...args)
-}
-
-function logError () {
-  return log('error', ...arguments)
-}
-
-function startHttp () {
+function startHttp (port) {
   const host = 'localhost'
-  const port = 8066
   const websocket = new WebSocketServer({ noServer: true })
 
   websocket.on('connection', client => {
@@ -456,6 +312,13 @@ function startHttp () {
 
         default:
           connection.topics.push(data.request)
+
+          if (data.request in valueStore) {
+            connection.send({
+              response: data.request,
+              value: valueStore[data.request]
+            })
+          }
       }
 
       // console.log('received: %s', data)
@@ -545,6 +408,13 @@ function publish (topic, value) {
   // log('Publishing to "' + topic + '":', value)
   // log('TYPE-------', typeof value)
   valueStore[topic] = value
+
+  if (topic in onStore) {
+    onStore[topic].forEach(callback => {
+      if (typeof callback === 'function') callback(value)
+    })
+  }
+
   try {
     mqttClient.publish(topic, value instanceof Object ? JSON.stringify(value) : String(value), { retain: true })
   } catch (ex) {

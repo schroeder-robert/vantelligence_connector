@@ -21,32 +21,31 @@ export default async ({ device, poll, prop, restart, stateValues, log, logError 
 
     return restart()
   }
+  
+  if (pins instanceof Array) {
+    for (const pin of pins) {
+      const key = pin.key || 'pin_' + pin.id
 
-  for (const pin of pins) {
-    const key = pin.key || 'pin_' + pin.id
+      if (pin.type === 'in') {
+        await mcp.inputPin(pin.id, !!pin.inverted)
 
-    if (pin.type === 'in') {
-      await mcp.inputPin(pin.id, !!pin.inverted)
+        entities[pin.id] = dev.binarySensor(key, pin.name)
+        entities[pin.id].state(await mcp.getPinValue(pin.id) ? stateValues.on : stateValues.off)
+      }
 
-      entities[pin.id] = dev.binarySensor(key, pin.name)
-      entities[pin.id].state(await mcp.getPinValue(pin.id) ? stateValues.on : stateValues.off)
-    }
+      if (pin.type === 'out') {
+        await mcp.outputPin(pin.id, !!pin.inverted, !!pin.active)
 
-    if (pin.type === 'out') {
-      await mcp.outputPin(pin.id, !!pin.inverted, !!pin.active)
-
-      entities[pin.id] = dev.switch(key, pin.name)
-      entities[pin.id].state(stateValues.off)
-      entities[pin.id].command(value => {
-        const to = ((value === stateValues.on && !pin.inverted) || (value !== stateValues.on && pin.inverted)) ? true : false
-
-        mcp.setPin(pin.id, to)
-        entities[pin.id].state(to ? stateValues.on : stateValues.off)
-      })
+        entities[pin.id] = dev.switch(key, pin.name)
+        entities[pin.id].state(stateValues.off)
+        entities[pin.id].command(value => {
+          mcp.setPin(pin.id, value === stateValues.on)
+          entities[pin.id].state(value)
+        })
+      }
     }
   }
 
   mcp.on('input', event => entities[event.pin].state(event.value ? stateValues.on : stateValues.off))
-
   poll(50, () => mcp.doPoll())
 }

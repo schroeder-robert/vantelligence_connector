@@ -91,7 +91,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   const temperatureIntake = dev.sensor('temperature_intake', 'Temperatur Innenraum', { class: entityClasses.temperature, unit: entityUnits.celsius })
   const temperatureSensor = dev.sensor('temperature_sensor', 'Temperatur extern', { class: entityClasses.temperature, unit: entityUnits.celsius })
   const temperatureHeatExchanger = dev.sensor('temperature_heat_exchanger', 'Temperatur Wärmetauscher', { class: entityClasses.temperature, unit: entityUnits.celsius })
-  const temperaturePanel = dev.sensor('temperature_panel', 'Temperatur Bedienpanel', { class: entityClasses.temperature, unit: entityUnits.celsius })
+  const temperaturePanel = dev.number('temperature_panel', 'Temperatur Bedienpanel', { class: entityClasses.temperature, step: 0.1, min: -99, max: 99 })
   const voltage = dev.sensor('voltage', 'Spannung', { class: entityClasses.voltage, unit: entityUnits.volt, category: entityCategories.diagnostic })
   const fanRpmSpecified = dev.sensor('fan_rpm_specified', 'Lüfterdrehzahl Vorgabe', { category: entityCategories.diagnostic, unit: entityUnits.rpm })
   const fanRpmActual = dev.sensor('fan_rpm_actual', 'Lüfterdrehzahl Aktuell', { unit: entityUnits.rpm })
@@ -106,18 +106,14 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   // communication
   const sendSerial = createSerialConnection({ path: connection.port, baudRate: 9600 })
   const requestVersion = async () => {
-    const buffer = await send(sendSerial, 'version')
-
-    if (buffer.length < 5) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 5', 'Got: ' + buffer.length)
+    const buffer = await send(sendSerial, 'version', null, 5)
     
     firmwareVersion.state(Array.from({ length: 4 }).map((v, i) => buffer.readUInt8(i)).join('.'))
     blackboxVersion.state(buffer.readUInt8(4))
   }
-  const requestStatus = async () => {
-    const buffer = await send(sendSerial, 'status')
 
-    if (buffer.length < 15) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 15', 'Got: ' + buffer.length)
-    
+  const requestStatus = async () => {
+    const buffer = await send(sendSerial, 'status', null, 19)
     const code = buffer.readUInt8(0) + '.' + buffer.readUInt8(1)
     
     control.state(CONTROL_OPTIONS[['0.1', '4.0'].includes(code) ? 'off' : (code === '3.35' ? 'fan_only' : 'heat')])
@@ -125,16 +121,35 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
     status.state(STATUS_OPTIONS[code] || code)
     voltage.state(buffer.readUInt8(6) / 10)
     temperatureIntake.state(buffer.readInt8(3))
-    temperatureSensor.state(buffer.readUInt8(4))
+    temperatureSensor.state(75 + buffer.readInt8(4) * -0.655)
     temperatureHeatExchanger.state(buffer.readUInt8(8) - 15)
     fanRpmSpecified.state(buffer.readUInt8(11) * 60)
     fanRpmActual.state(buffer.readUInt8(12) * 60)
     frequencyFuelPump.state(buffer.readUInt8(14) / 100)
+
+    // console.log(Array.from(buffer).map(v => String(v.toString(16)).padStart(2, '0')).join(' '))
+
+    // console.log([
+    //   buffer.readUInt8(0) + '.' + buffer.readUInt8(1),
+    //   buffer.readInt8(2),
+    //   buffer.readInt8(3),
+    //   Math.round(75 + buffer.readInt8(4) * -0.655),
+    //   buffer.readUInt8(5),
+    //   buffer.readUInt8(6) / 10,
+    //   buffer.readUInt8(7),
+    //   buffer.readUInt8(8) - 15,
+    //   buffer.readUInt8(9),
+    //   buffer.readUInt8(10),
+    //   buffer.readUInt8(11) * 60,
+    //   buffer.readUInt8(12) * 60,
+    //   buffer.readUInt8(13),
+    //   buffer.readUInt8(14) / 100
+    // ].map(v => String(v).padStart(8)).join(' | '))
+
+    // log([75 + buffer.readInt8(4).toString(10) * -0.655, buffer.readInt8(4).toString(16)])
   }
   const requestSettings = async (payload) => {
-    const buffer = await send(sendSerial, 'settings', payload)
-
-    if (buffer.length < 6) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 6', 'Got: ' + buffer.length)
+    const buffer = await send(sendSerial, 'settings', payload, 6)
     
     bufferSettings = buffer
     timer.state((v => v === 65535 ? 0 : v)(buffer.readUInt16BE(0)))
@@ -145,9 +160,7 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
     level.availability(mode.state() === 2 ? 'online' : 'offline')
   }
   const reportTemperature = async (value) => {
-    const buffer = await send(sendSerial, 'temperature', Buffer.from([parseInt(value)]))
-  
-    if (buffer.length < 1) return logError(ERROR_BUFFER_TOO_SHORT, 'Expected: 1', 'Got: ' + buffer.length)
+    const buffer = await send(sendSerial, 'temperature', Buffer.from([parseInt(value)]), 1)
 
     temperaturePanel.state(buffer.readUInt8(0))
   }
@@ -223,6 +236,10 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
     updateSettings(SETTINGS.level, value)
   })
 
+  temperaturePanel.command(value => {
+    reportTemperature(Math.round(value))
+  })
+
   on('temperature_current', value => {
     reportTemperature(Math.round(value))
   })
@@ -237,15 +254,17 @@ export default async ({ device, on, poll, prop, createSerialConnection, entityCl
   })
 }
 
-async function send (transport, key, payload) {
+async function send (transport, key, payload, expected) {
   payload = payload || Buffer.alloc(0)
 
   const id = Object.keys(MESSAGE_IDS)[Object.values(MESSAGE_IDS).indexOf(key)]
   const header = Buffer.from([0xAA, 0x03, payload.length, 0x00, id])
   const bytes = Buffer.concat([header, payload, checksum(Buffer.concat([header, payload]))])
   const buffer = await transport(bytes)
-  
+  const response = buffer.slice(5, -2)
+  // console.log(response.toString('hex'))
   if (buffer.length < 5) throw new Error('Buffer too short')
+  if (expected > 0 && response.length < expected) throw new Error(`${ERROR_BUFFER_TOO_SHORT} (${key}) expected: ${expected}, got: ${response.length}\n${response.toString('hex')}`)
 
   const type = MESSAGE_TYPES[buffer.readUInt8(1)] || buffer.readUInt8(1)
   // const length = buffer[2]
@@ -262,7 +281,7 @@ async function send (transport, key, payload) {
   //   id = buffer.readUInt8(4)
   // }
 
-  return buffer.slice(5, -2)
+  return response
 }
 
 function checksum (bytes) {

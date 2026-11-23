@@ -1,8 +1,8 @@
-import { spawn, spawnSync } from 'node:child_process'
+import { execFile, execFileSync } from 'node:child_process'
 
-const DEFAULT_SINK = '@DEFAULT_AUDIO_SINK@'
+export const DEFAULT_SINK = '@DEFAULT_AUDIO_SINK@'
 
-export default ({ device, poll, prop, on, stateValues, entityClasses, entityUnits }) => {
+export default ({ device, poll, prop, on, stateValues, entityClasses, entityUnits, log }) => {
   const wp = device('wireplumber', 'WirePlumber')
   const volume = wp.number('volume', 'Volume', { icon: 'mdi:volume-high', min: 0, max: 100, step: 1, class: entityClasses.volume, unit: entityUnits.percent }, { command: (state) => setVolume(state) })
   const mute = wp.switch('mute', 'Mute', { icon: 'mdi:volume-off' }, { command: (state) => setMute(state) })
@@ -19,12 +19,12 @@ export default ({ device, poll, prop, on, stateValues, entityClasses, entityUnit
   }
   
   const setVolume = (value) => {
-    request('set-volume', DEFAULT_SINK, parseInt(value) / 100)
+    run('set-volume', DEFAULT_SINK, parseInt(value) / 100)
     volume.state(value)
   }
   
   const changeVolume = (value) => {
-    request('set-volume', DEFAULT_SINK, value)
+    run('set-volume', DEFAULT_SINK, value)
     volume.state(getVolume().volume * 100)
   }
   
@@ -54,11 +54,11 @@ export default ({ device, poll, prop, on, stateValues, entityClasses, entityUnit
   })
 }
 
-function runTest () {
+export function runTest () {
   spawnSync('paplay', ['/usr/share/sounds/freedesktop/stereo/complete.oga'])
 }
 
-function status () {
+export function status () {
   const result = request('status')
   const data = {}
 
@@ -97,8 +97,12 @@ function status () {
   return data
 }
 
-function request () {
-  const result = spawnSync('wpctl', Object.values(arguments)).stdout.toString().trim()
+export function run () {
+  execFile('wpctl', Object.values(arguments))
+}
+
+export function request () {
+  const result = execFileSync('wpctl', Object.values(arguments)).toString().trim()
   
   return result ? result.split(/\n\t?/) : []
 }
