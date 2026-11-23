@@ -1,11 +1,7 @@
 modules:
-  - name: OLED
-    id: oled
-    type: Oleddisplay
-
-  # - name: Bluetooth
-  #   id: bluetooth
-  #   type: MadeByRob_Bluetooth
+  - name: Bluetooth
+    id: bluetooth
+    type: MadeByRob_Bluetooth
 
   - name: WirePlumber
     id: wireplumber
@@ -14,277 +10,344 @@ modules:
       mute: connector/device/canbus/front_panel_mute/state
       volume: connector/device/canbus/front_panel_volume/state
 
-  # - name: Soundsystem
-  #   id: sound
-  #   type: Pulseaudio
-  #   connection:
-  #     socket:
-  #   controls:
-  #     - name: Main
-  #       id: Master
-  #   subscribe:
-  #     mute: connector/device/canbus/front_panel_mute/state
-  #     volume_down: connector/device/canbus/front_panel_volume_down/state
-  #     volume_up: connector/device/canbus/front_panel_volume_up/state
-
   - name: CAN-Bus
     id: canbus
     type: MadeByRob_Socketcan
 
-  - name: Außenlichter
-    id: outer_lights
-    type: PCA9685
-    channels:
-      - name: Blinker vorne rechts
-        id: 0
-        type: light
-        scale: 255
-      - name: Positionslicht links
-        id: 1
-        type: light
-        scale: 255
-      - name: Blinker vorne links
-        id: 2
-        type: light
-        scale: 255
-      - name: Positionslicht rechts
-        id: 3
-        type: light
-        scale: 255
-      - name: Blinker hinten links
-        id: 4
-        type: light
-      - name: Rücklicht links
-        id: 5
-        type: light
-        scale: 255
-      - name: Blinker hinten rechts
-        id: 6
-        type: light
-        scale: 255
-      - name: Rücklicht rechts
-        id: 7
-        type: light
-        scale: 255
-      - name: Arbeitslicht rechts
-        id: 8
-        type: light
-      - name: Arbeitslicht links
-        id: 9
-        type: light
-      - name: Fernlicht rechts
-        id: 10
-        type: light
-      - name: Fernlicht links
-        id: 11
-        type: light
-
-  - name: Innenlichter
-    id: inner_lights
-    type: PCA9685
-    connection:
-      bus: 1
-      address: 0x60
-    channels:
-      - name: Schubladenverrieglung
-        id: 6
-        min: 400
-        max: 2600
-        scale: 180
-      - name: Kühlschrankverrieglung
-        id: 7
-        min: 400
-        max: 2600
-        scale: 180
-      - name: Dachluke
-        id: 8
-        type: light
-        scale: 255
-      - name: Laderaum
-        id: 9
-        type: light
-        scale: 255
-      - name: Schiebetür rechts
-        id: 10
-        type: light
-        scale: 255
-      - name: Schiebetür links
-        id: 11
-        type: light
-        scale: 255
-
-  - name: Temperatursensor
-    id: temperatursensor
-    type: DS18B20
-    interval: 30000
-
-  - name: Luftsensor
-    id: luftsensor
-    type: BME280
-
-  - name: Helligkeitssensor
-    id: helligkeitssensor
-    type: BH1750
-
-  # - name: Wechselrichter
-  #   id: wechselrichter
-  #   type: Ective_CSI
-  #   connection:
-  #     type: pins
-  #     power_pin: 13
-  #     mode_pin: 19
-  #     data_pin: 26
-
-  # - name: Akku
-  #   id: battery
-  #   type: JBD_BMS
-  #   connection:
-  #     port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.1.4:1.0-port0
-
   - name: B2B-Laderegler
     id: booster
-    type: Votronic_VCC_1212
+    type: Ective_BB
+    #type: Votronic_VCC_1212
     connection:
-      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.4:1.0-port0
+      port: /dev/serial/by-path/platform-xhci-hcd.1-usb-0:1.1.3:1.0-port0
 
   - name: Solar-Laderegler
     id: solar
     type: Ective_DSC
     connection:
-      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.2:1.0-port0
+      port: /dev/serial/by-path/platform-xhci-hcd.1-usb-0:1.1.2:1.0-port0
 
   - name: Dieselheizung
     id: heater
     type: Autoterm_Air_2D
-    subscribe:
-      temperature_current: connector/device/luftsensor/temperature/state
     connection:
-      port: /dev/serial/by-path/platform-fd500000.pcie-pci-0000:01:00.0-usb-0:1.1.3:1.0-port0
+      port: /dev/serial/by-path/platform-xhci-hcd.1-usb-0:1.1.4:1.0-port0
 
-  - name: Analogsensor
-    id: analogsensor
-    type: ADS1115
-    interval: 3000
-    values:
-      - name: A0
-        filter: false
-        # unit: L
-        # class: water
-      - name: A1
-        filter: false
-      - name: A2
-        filter: false
-        # unit: L
-        # class: water
-      - name: A3
-        filter: false
+  - name: Wechselrichter
+    id: wechselrichter
+    type: Ective_CSI
+    connection:
+      port: /dev/serial/by-path/platform-xhci-hcd.1-usb-0:1.1.1:1.0-port0
 
-  - name: Externer I/O Expander
-    id: external_gpio
-    type: MCP23017
+  - name: Akku
+    id: battery
+    type: JBD_BMS
+    connection:
+      port: /dev/serial/by-path/platform-xhci-hcd.1-usbv2-0:1.2:1.0-port0
+
+  - name: Bewegungssensor
+    id: bewegungssensor
+    type: MPU_6050
     connection:
       bus: 1
-      address: 0x27
+      address: 0x68
+    axles:
+      x:
+        map: 'x'
+        flip: true
+        offset: 0
+      y:
+        map: 'y'
+        flip: false
+        offset: 50
+      z:
+        map: 'z'
+        flip: false
+        offset: 0
+  
+  - name: Libgpiod
+    id: libgpiod
+    type: RaspberryPi_Libgpiod
     pins:
+      - name: GPIO17
+        id: 17
+        type: out
+        inverted: true
+      - name: GPIO22
+        id: 22
+        type: out
+        inverted: true
+      - name: GPIO23
+        id: 23
+        type: out
+        inverted: true
+      - name: GPIO27
+        id: 27
+        type: out
+        inverted: true
 
-  - name: I/O Expander
-    id: gpio
-    type: MCP23017
-    pins:
-      - name: Input0
-        id: 0
-        type: in
-        inverted: true
-      - name: Input1
-        id: 1
-        type: in
-        inverted: true
-      - name: Input2
-        id: 2
-        type: in
-        inverted: true
-      - name: Dachluke offen
-        key: dachluke_offen
-        id: 3
-        type: in
-        inverted: true
-      - name: Taster hinten
-        key: taster_hinten
-        id: 4
-        type: in
-        inverted: true
-      - name: Schalter Dachluke
-        key: schalter_dachluke
-        id: 5
-        type: in
-        inverted: true
-      - name: Taster links
-        key: taster_links
-        id: 6
-        type: in
-        inverted: true
-      - name: Taster rechts
-        key: taster_rechts
-        id: 7
-        type: in
-        inverted: true
-      - name: Abwasserventil auf
-        key: abwasserventil_auf
-        id: 8
-        type: out
-      - name: Abwasserventil zu
-        key: abwasserventil_zu
-        id: 9
-        type: out
-      - name: Wasserpumpe
-        key: wasserpumpe
-        id: 10
-        type: out
-      - name: Startsignal
-        key: startsignal
-        id: 11
-        type: out
-      - name: Soundsystem
-        key: soundsystem
-        id: 12
-        type: out
-      - name: Duschpumpe
-        key: duschpumpe
-        id: 13
-        type: out
-      - name: Defekt
-        key: defekt
-        id: 14
-        type: out
-      - name: Dashcam
-        key: dashcam
-        id: 15
-        type: out
+esp:
+  # - name: OLED
+  #   id: oled
+  #   type: Oleddisplay
 
-  - name: GPIO
-    id: gpio_pi
-    type: RaspberryPi_GPIO
-    pins:
-      - name: Kanal 1+2
-        id: 35
-        type: out
-      - name: Kanal 3+4
-        id: 36
-        type: out
+  # - name: Außenlichter
+  #   id: outer_lights
+  #   type: PCA9685
+  #   channels:
+  #     - name: Blinker vorne rechts
+  #       id: 0
+  #       type: light
+  #       scale: 255
+  #     - name: Positionslicht links
+  #       id: 1
+  #       type: light
+  #       scale: 255
+  #     - name: Blinker vorne links
+  #       id: 2
+  #       type: light
+  #       scale: 255
+  #     - name: Positionslicht rechts
+  #       id: 3
+  #       type: light
+  #       scale: 255
+  #     - name: Blinker hinten links
+  #       id: 4
+  #       type: light
+  #     - name: Rücklicht links
+  #       id: 5
+  #       type: light
+  #       scale: 255
+  #     - name: Blinker hinten rechts
+  #       id: 6
+  #       type: light
+  #       scale: 255
+  #     - name: Rücklicht rechts
+  #       id: 7
+  #       type: light
+  #       scale: 255
+  #     - name: Arbeitslicht rechts
+  #       id: 8
+  #       type: light
+  #     - name: Arbeitslicht links
+  #       id: 9
+  #       type: light
+  #     - name: Fernlicht rechts
+  #       id: 10
+  #       type: light
+  #     - name: Fernlicht links
+  #       id: 11
+  #       type: light
 
-#  - name: Bewegungssensor
-#    id: bewegungssensor
-#    type: MPU_6050
-#    connection:
-#      bus: 1
-#      address: 0x69
-#    axles:
-#      x:
-#        map: x
-#        flip: false
-#      y:
-#        map: y
-#        flip: false
-#      z:
-#        map: z
-#        flip: false
+  # - name: Innenlichter
+  #   id: inner_lights
+  #   type: PCA9685
+  #   connection:
+  #     bus: 1
+  #     address: 0x60
+  #   channels:
+  #     - name: Schubladenverrieglung
+  #       id: 6
+  #       min: 400
+  #       max: 2600
+  #       scale: 180
+  #     - name: Kühlschrankverrieglung
+  #       id: 7
+  #       min: 400
+  #       max: 2600
+  #       scale: 180
+  #     - name: Dachluke
+  #       id: 8
+  #       type: light
+  #       scale: 255
+  #     - name: Laderaum
+  #       id: 9
+  #       type: light
+  #       scale: 255
+  #     - name: Schiebetür rechts
+  #       id: 10
+  #       type: light
+  #       scale: 255
+  #     - name: Schiebetür links
+  #       id: 11
+  #       type: light
+  #       scale: 255
+
+  # - name: Temperatursensor
+  #   id: temperatursensor
+  #   type: DS18B20
+  #   interval: 1000
+
+  # - name: Luftsensor
+  #   id: luftsensor
+  #   type: BME280
+
+  # - name: Helligkeitssensor
+  #   id: helligkeitssensor
+  #   type: BH1750
+
+  # - name: Analogsensor
+  #   id: analogsensor
+  #   type: ADS1115
+  #   interval: 3000
+  #   values:
+  #     - name: A0
+  #       filter: false
+  #       # unit: L
+  #       # class: water
+  #     - name: A1
+  #       filter: false
+  #     - name: A2
+  #       filter: false
+  #       # unit: L
+  #       # class: water
+  #     - name: A3
+  #       filter: false
+
+  # - name: I/O Expander
+  #   id: gpio
+  #   type: MCP23017
+  #   pins:
+  #     - name: Input0
+  #       id: 0
+  #       type: in
+  #       inverted: true
+  #     - name: Input1
+  #       id: 1
+  #       type: in
+  #       inverted: true
+  #     - name: Input2
+  #       id: 2
+  #       type: in
+  #       inverted: true
+  #     - name: Dachluke offen
+  #       key: dachluke_offen
+  #       id: 3
+  #       type: in
+  #       inverted: true
+  #     - name: Taster hinten
+  #       key: taster_hinten
+  #       id: 4
+  #       type: in
+  #       inverted: true
+  #     - name: Schalter Dachluke
+  #       key: schalter_dachluke
+  #       id: 5
+  #       type: in
+  #       inverted: true
+  #     - name: Taster links
+  #       key: taster_links
+  #       id: 6
+  #       type: in
+  #       inverted: true
+  #     - name: Taster rechts
+  #       key: taster_rechts
+  #       id: 7
+  #       type: in
+  #       inverted: true
+  #     - name: Abwasserventil auf
+  #       key: abwasserventil_auf
+  #       id: 8
+  #       type: out
+  #     - name: Abwasserventil zu
+  #       key: abwasserventil_zu
+  #       id: 9
+  #       type: out
+  #     - name: Wasserpumpe
+  #       key: wasserpumpe
+  #       id: 10
+  #       type: out
+  #     - name: Startsignal
+  #       key: startsignal
+  #       id: 11
+  #       type: out
+  #     - name: Soundsystem
+  #       key: soundsystem
+  #       id: 12
+  #       type: out
+  #     - name: Duschpumpe
+  #       key: duschpumpe
+  #       id: 13
+  #       type: out
+  #     - name: Defekt
+  #       key: defekt
+  #       id: 14
+  #       type: out
+  #     - name: Dashcam
+  #       key: dashcam
+  #       id: 15
+  #       type: out
+
+  # - name: I/O Expander Extern
+  #   id: gpio_ext
+  #   type: MCP23017
+  #   connection:
+  #     bus: 1
+  #     address: 0x27
+  #   pins:
+  #     - name: Output0
+  #       id: 0
+  #       type: out
+  #       inverted: true
+  #     - name: Output1
+  #       id: 1
+  #       type: out
+  #       inverted: true
+  #     - name: Output2
+  #       id: 2
+  #       type: out
+  #       inverted: true
+  #     - name: Output3
+  #       id: 3
+  #       type: out
+  #       inverted: true
+  #     - name: Output4
+  #       id: 4
+  #       type: out
+  #       inverted: true
+  #     - name: Output5
+  #       id: 5
+  #       type: out
+  #       inverted: true
+  #     - name: Output6
+  #       id: 6
+  #       type: out
+  #       inverted: true
+  #     - name: Output7
+  #       id: 7
+  #       type: out
+  #       inverted: true
+  #     - name: Output8
+  #       id: 8
+  #       type: out
+  #       inverted: true
+  #     - name: Output9
+  #       id: 9
+  #       type: out
+  #       inverted: true
+  #     - name: Output10
+  #       id: 10
+  #       type: out
+  #       inverted: true
+  #     - name: Output11
+  #       id: 11
+  #       type: out
+  #       inverted: true
+  #     - name: Output12
+  #       id: 12
+  #       type: out
+  #       inverted: true
+  #     - name: Output13
+  #       id: 13
+  #       type: out
+  #       inverted: true
+  #     - name: Output14
+  #       id: 14
+  #       type: out
+  #       inverted: true
+  #     - name: Output15
+  #       id: 15
+  #       type: out
+  #       inverted: true
+
+
